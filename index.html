@@ -2,33 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f3ee" />
   <title>VICTOR</title>
-  <link rel="stylesheet" href="/src/style.css" />
+  <link rel="stylesheet" href="/src/app.css" />
   <style>
-    .hero { padding: 72px 0 48px; }
-    .hero h1 { font-size: clamp(30px, 6vw, 44px); max-width: 520px; }
-    .hero p { font-size: 17px; max-width: 480px; }
-    .tools a { display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
-      padding: 20px 0; border-top: 1px solid var(--line); text-decoration: none; }
-    .tools a:last-child { border-bottom: 1px solid var(--line); }
-    .tools a:hover .name { text-decoration: underline; }
-    .tools .name { font-size: 18px; font-weight: 600; }
-    .tools .desc { color: var(--muted); font-size: 14px; text-align: right; }
+    .hero { padding: 40px 0 36px; }
+    .hero .name { font-size: 14px; letter-spacing: .14em; font-weight: 600; color: var(--accent); margin-bottom: 18px; }
+    .hero h1 { font-size: 34px; }
+    .steps { margin: 0 0 32px; padding: 0; list-style: none; counter-reset: s; }
+    .steps li { counter-increment: s; display: flex; gap: 14px; padding: 10px 0; }
+    .steps li::before {
+      content: counter(s); flex: none; width: 28px; height: 28px; border-radius: 50%;
+      background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 14px;
+      display: grid; place-items: center; margin-top: 1px;
+    }
+    .more { margin-top: 40px; }
   </style>
 </head>
 <body>
-  <header class="top"><a class="brand" href="/">VICTOR</a></header>
-  <main class="wrap">
+  <main class="page">
     <section class="hero">
-      <h1>Find hidden cameras by making them react.</h1>
-      <p class="muted">Blink a secret pattern at the room. A camera can't help answering in the same pattern.</p>
+      <div class="name" data-app-name>VICTOR</div>
+      <h1 id="tagline">A 60-second privacy check before you settle into a room.</h1>
     </section>
-    <section class="tools">
-      <a href="/scan.html"><span class="name">Lens scan</span><span class="desc">Phone torch finds the lens</span></a>
-      <a href="/challenge.html"><span class="name">Wi-Fi test</span><span class="desc">Screen flicker finds the streaming device</span></a>
-    </section>
-    <p class="muted small" style="margin-top:40px">Runs in your browser. Nothing is uploaded.</p>
+
+    <ol class="steps">
+      <li><span><b>Lens check.</b> <span class="muted">The torch blinks a secret pattern. A camera lens sends it straight back.</span></span></li>
+      <li><span><b>IR check.</b> <span class="muted">In the dark, look for night-vision lights your eyes cannot see.</span></span></li>
+      <li><span><b>Results.</b> <span class="muted">See what we checked and save a report.</span></span></li>
+    </ol>
+
+    <a class="btn primary" href="/lens.html">Start the check</a>
+
+    <ul class="list more">
+      <li><a href="/results.html"><span class="label">Results</span><span class="hint">From this phone</span></a></li>
+      <li><a href="/help.html"><span class="label">If you found something</span><span class="hint">What to do next</span></a></li>
+      <li><a href="/challenge.html"><span class="label">Wi-Fi check</span><span class="hint">Laptop step, needs a Mac</span></a></li>
+    </ul>
+
+    <p class="muted small" style="margin-top:28px">Runs on this phone. Nothing is uploaded.</p>
   </main>
+  <script type="module">
+    import { initPage } from '/src/ui.js';
+    import { TAGLINE } from '/src/config.js';
+    initPage('');
+    document.getElementById('tagline').textContent = TAGLINE;
+  </script>
 </body>
 </html>

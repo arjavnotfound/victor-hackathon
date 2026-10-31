@@ -1,10 +1,12 @@
-// PDF evidence report (jsPDF). Built entirely in the browser.
-// After the PDF is made we compute its SHA-256 and show it on screen: if
-// anyone changes even one byte of the file later, the fingerprint changes.
+// PDF report (jsPDF). Built entirely in the browser.
+// Two fingerprints: one of the report's contents, printed inside the PDF
+// (see report-content.js), and one of the finished file, shown on screen.
 
 import { jsPDF } from 'jspdf';
 import { drawTraffic, drawRssi, LIGHT } from './charts.js';
 import { codeToString } from './code.js';
+import { APP_NAME } from './config.js';
+import { reportContent, fingerprint, NOTHING_FOUND, LIMITS } from './report-content.js';
 
 const VERDICT_TEXT = {
   camera: 'Camera very likely: its traffic followed the secret code.',
@@ -12,8 +14,14 @@ const VERDICT_TEXT = {
   no: 'No device followed the code.',
 };
 
-/** Returns { blob, hash, name }. */
-export async function buildReport({ session, result, device, snapshots = [], fileName = '', demo = false }) {
+/**
+ * Returns { blob, hash, contentHash, name }. `checks`, `wifi` (the short saved
+ * Wi-Fi result) and `phone` come from store.js; `session`/`result`/`device`
+ * are the full Wi-Fi analysis when the report is made on the Wi-Fi page.
+ */
+export async function buildReport({
+  session, result, device, snapshots = [], fileName = '', demo = false, checks = {}, wifi = null, phone = null,
+}) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const W = 210, M = 15;
   let y = 18;
@@ -28,13 +36,41 @@ export async function buildReport({ session, result, device, snapshots = [], fil
   const gap = (h = 3) => { y += h; };
   const kv = (k, v) => line(`${k}: ${v}`, 10);
   const now = new Date();
+  const top = device || result?.devices[0];
+  const content = reportContent({
+    made: now.toISOString(), demo, checks, wifi, snapshots, phone,
+    wifiDetail: result ? {
+      code: session ? codeToString(session.code) : '', fileHash: result.fileHash,
+      devices: result.devices.slice(0, 6).map((x) => ({ mac: x.mac, score: +x.score.toFixed(3), verdict: x.verdict })),
+    } : null,
+  });
+  const contentHash = await fingerprint(content);
 
-  line('VICTOR evidence report', 20, true);
+  line(`${APP_NAME} privacy check report`, 20, true);
   line(`Made ${now.toLocaleString()} (UTC ${now.toISOString()})`, 9, false, 90);
-  if (demo) line('DEMO: this report uses a simulated capture, not a real room.', 10, true, 180);
+  if (demo) line('DEMO: this report uses simulated data, not a real room.', 10, true, 180);
   gap();
 
-  line('1. Wi-Fi challenge', 13, true);
+  line('1. What was checked', 13, true);
+  for (const [k, v] of content.checks) kv(k, v);
+  gap();
+
+  line('2. Spots worth a closer look', 13, true);
+  if (!snapshots.length) line(NOTHING_FOUND, 10);
+  for (const s of snapshots) {
+    if (y > 200) { doc.addPage(); y = 18; }
+    const kind = s.mode === 'ir' ? 'IR check' : `Lens check${s.code ? ', torch code ' + s.code : ''}`;
+    line(`${new Date(s.time).toLocaleString()}  ·  ${kind}  ·  ${s.label || s.note || ''}`, 9);
+    if (!s.image) { line('(photo too large to keep)', 9, false, 100); continue; }
+    const props = doc.getImageProperties(s.image);
+    const iw = 110, ih = iw * props.height / props.width;
+    doc.addImage(s.image, 'JPEG', M, y, iw, ih);
+    y += ih + 4;
+  }
+  line(LIMITS, 9, false, 60);
+  gap();
+
+  line('3. Wi-Fi check details', 13, true);
   if (result && session) {
     kv('Secret code', `${codeToString(session.code)} (${session.code.length} bits, ${session.bitMs / 1000} s per bit; 1 = screen flickering)`);
     kv('Challenge started', session.startMs ? new Date(session.startMs).toISOString() : 'not recorded (whole capture searched)');
@@ -43,7 +79,7 @@ export async function buildReport({ session, result, device, snapshots = [], fil
     kv('Frames / transmitters', `${result.totalFrames} frames from ${result.transmitters} transmitters`);
     if (result.channels[0]) kv('Channel', result.channels.map((c) => c.ch).join(', '));
     gap();
-    const d = device || result.devices[0];
+    const d = top;
     if (d) {
       line(VERDICT_TEXT[d.verdict], 12, true, d.verdict === 'camera' ? 170 : 20);
       kv('Device address (MAC)', d.mac);
@@ -71,32 +107,37 @@ export async function buildReport({ session, result, device, snapshots = [], fil
       line(`${x.mac}  ${x.vendor.padEnd(14)}  score ${x.score.toFixed(2)}  p ${x.p.toFixed(3)}  ${x.verdict}`, 9);
     }
   } else {
-    line('Not run in this session.', 10);
+    line(wifi ? content.checks[2][1] : 'Not run on this device.', 10);
   }
   gap();
 
-  line('2. Lens scan snapshots', 13, true);
-  if (!snapshots.length) line('No snapshots saved.', 10);
-  for (const s of snapshots) {
-    if (y > 200) { doc.addPage(); y = 18; }
-    line(`${new Date(s.time).toLocaleString()}  ·  ${s.mode === 'ir' ? 'IR mode' : 'Lens mode, torch code ' + s.code}  ·  ${s.note}`, 9);
-    const props = doc.getImageProperties(s.image);
-    const iw = 110, ih = iw * props.height / props.width;
-    doc.addImage(s.image, 'JPEG', M, y, iw, ih);
-    y += ih + 4;
+  line('4. Phone and browser', 13, true);
+  if (phone) {
+    if (phone.model) kv('Phone', phone.model + (phone.platform ? ` (${phone.platform})` : ''));
+    if (phone.camera) kv('Camera', phone.camera);
+    kv('Browser', phone.browser || 'unknown');
+    if (phone.support) kv('Camera controls', phone.support.map(([k, v]) => `${k}: ${v}`).join('; '));
+  } else {
+    line('Not recorded.', 10);
   }
   gap();
 
-  line('3. How the test works', 13, true);
-  line('Lens: the phone torch blinked a random code. A camera lens reflects light straight back to its source, so it blinks back in the same code. Only small dots that matched the code were marked.', 9);
+  line('5. How the checks work', 13, true);
+  line('Lens: the phone torch blinked a random code. A camera lens reflects light straight back to its source, so it blinks back in the same code. Only small dots that matched the code were marked. A spot seen again after the phone moved is less likely to be a passing reflection.', 9);
+  line('IR: with the lights and the torch off, the phone camera looked for small bright points that stayed on or blinked steadily, like the night-vision lights some cameras have.', 9);
   line('Wi-Fi: the screen flickered in a random code in front of the object. A streaming camera must send more data when its picture changes, so its traffic rises and falls with the code. Each device was scored by correlation, and compared with 200 random codes to get the p-value.', 9);
   line('Limits: a high score is strong evidence, not proof in law. Cameras that only record to a memory card, or use mobile data, do not show up in the Wi-Fi test.', 9);
   gap();
-  line('Keep this PDF together with the SHA-256 fingerprint shown on screen when it was made. Team VICTOR.', 8, false, 100);
+  gap();
+  line('6. Fingerprint', 13, true);
+  line(`Content fingerprint (SHA-256): ${contentHash}`, 9, true);
+  line('This code is worked out from everything in this report, photos included, so if anyone changes the contents later the code will no longer match.', 9);
+  gap();
+  line(`Made with ${APP_NAME}. Team VICTOR.`, 8, false, 100);
 
   const bytes = doc.output('arraybuffer');
   const d = await crypto.subtle.digest('SHA-256', bytes);
   const hash = [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
-  const name = `victor-report-${now.toISOString().replace(/[:.]/g, '-').slice(0, 19)}.pdf`;
-  return { blob: new Blob([bytes], { type: 'application/pdf' }), hash, name };
+  const name = `${APP_NAME.toLowerCase()}-report-${now.toISOString().replace(/[:.]/g, '-').slice(0, 19)}.pdf`;
+  return { blob: new Blob([bytes], { type: 'application/pdf' }), hash, contentHash, name };
 }

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f3ee" />
+  <title>VICTOR · Results</title>
+  <link rel="stylesheet" href="/src/app.css" />
+  <style>
+    .summary { font-family: var(--serif); font-size: 24px; line-height: 1.3; margin: 0 0 12px; }
+    .checks { list-style: none; padding: 0; margin: 0 0 28px; border-top: 1px solid var(--line); }
+    .checks li { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .checks li span:first-child { flex: none; }
+    .checks li span:last-child { color: var(--muted); text-align: right; font-size: 15px; }
+    .spot { margin: 0 0 20px; }
+    .spot img { width: 100%; border-radius: 12px; display: block; background: var(--soft); }
+    .spot p { margin: 8px 0 0; }
+    .spot .when { color: var(--muted); font-size: 14px; }
+    h2 { margin-top: 32px; }
+    .actions { margin-top: 28px; }
+    .hash { display: block; font-family: ui-monospace, Menlo, monospace; font-size: 12px; word-break: break-all; margin-top: 12px; }
+    .clear { background: none; border: 0; color: var(--muted); font: inherit; font-size: 15px; text-decoration: underline;
+      min-height: 48px; padding: 0; margin-top: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="topbar"><a class="back" href="/">&larr; Home</a><span class="brand" data-app-name>VICTOR</span></div>
+    <h1>Results</h1>
+    <p id="summary" class="summary"></p>
+    <p id="limits" class="muted small"></p>
+
+    <h2>What was checked</h2>
+    <ul id="checks" class="checks"></ul>
+
+    <section id="spotsSec" hidden>
+      <h2>Spots worth a closer look</h2>
+      <div id="spots"></div>
+    </section>
+
+    <div class="actions">
+      <button id="reportBtn" class="btn primary">Save report (PDF)</button>
+      <p id="reportNote" class="muted small" hidden></p>
+      <a class="btn" href="/help.html">If you found something</a>
+      <a id="againBtn" class="btn" href="/lens.html">Check again</a>
+      <button id="clearBtn" class="clear" type="button">Clear results and start fresh</button>
+    </div>
+  </main>
+  <script type="module" src="/src/results-page.js"></script>
+</body>
+</html>

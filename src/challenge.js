@@ -1,7 +1,7 @@
 // Wi-Fi challenge page: flicker the code, then analyze the Mac capture.
 
 import { makeCode, codeToString } from './code.js';
-import { getChallenge, saveChallenge, getSnapshots } from './store.js';
+import { getChallenge, saveChallenge, getSnapshots, saveWifiResult, getWifiResult, getChecks, getPhone } from './store.js';
 import { drawTraffic, drawRssi } from './charts.js';
 import { buildReport } from './report.js';
 
@@ -23,6 +23,9 @@ worker.onmessage = (e) => {
   }
   if (m.type === 'done') {
     result = m.result; selected = 0; $('progress').textContent = '';
+    // A short copy for the phone's Results page and report.
+    const top = result.devices[0];
+    saveWifiResult({ at: new Date().toISOString(), verdict: top ? top.verdict : 'none', mac: top?.mac || '', demo: isDemo, fileHash: m.result.fileHash });
     if (result.devices.length) showResult();
     else showSummary(result.summary, 'Nothing in this file was streaming video during the test, so there is no camera to score. Check the Sniffer was on the right channel and recording while the screen flashed. Here is what it did catch:');
   }
@@ -208,6 +211,7 @@ async function makeReport() {
   try {
     const { blob, hash, name } = await buildReport({
       session, result, device: result?.devices[selected], snapshots: getSnapshots(), fileName, demo: isDemo,
+      checks: getChecks(), wifi: getWifiResult(), phone: getPhone(),
     });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);

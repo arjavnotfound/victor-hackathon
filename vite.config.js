@@ -15,7 +15,10 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
-        scan: resolve(import.meta.dirname, 'scan.html'),
+        lens: resolve(import.meta.dirname, 'lens.html'),
+        ir: resolve(import.meta.dirname, 'ir.html'),
+        results: resolve(import.meta.dirname, 'results.html'),
+        help: resolve(import.meta.dirname, 'help.html'),
         challenge: resolve(import.meta.dirname, 'challenge.html'),
       },
     },

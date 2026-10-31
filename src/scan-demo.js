@@ -1,4 +1,4 @@
-// Simulated camera for laptops, tests and screenshots (scan.html?demo=1).
+// Simulated camera for laptops, tests and screenshots (lens.html?demo=1, ir.html?demo=1).
 // Draws a dim room with a phone charger. Inside the charger is a hidden lens
 // that lights up when the "torch" is on. There is also a glossy picture frame
 // (big reflection, should be ignored) and a standby LED blinking on its own
@@ -13,8 +13,9 @@ export function createDemoCamera() {
 
   function frame(t) {
     lit += ((cam.torch ? 1 : 0) - lit) * 0.6;
-    // Slow hand shake so repeated scans see the lens at slightly different places.
-    const dx = Math.sin(t / 1900) * 14, dy = Math.cos(t / 2300) * 9;
+    // Slow drift, like a hand that holds steady during a scan but is not a
+    // tripod: about 1-2 analysis pixels per scan, a few between scans.
+    const dx = Math.sin(t / 9000) * 18, dy = Math.cos(t / 11000) * 10;
     const base = cam.ir ? 12 : 40 + lit * 30;
 
     ctx.fillStyle = `rgb(${base},${base + 2},${base + 6})`;

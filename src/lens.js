@@ -185,3 +185,20 @@ export function updateTracks(tracks, blobs, maxDist = 40) {
   for (const b of blobs) b.confirmed = b.track.hits >= 2;
   return tracks;
 }
+
+/**
+ * All lens check thresholds in one place. The Details panel on the phone can
+ * change them (and remembers them), so they can be tuned on the real phone.
+ */
+export const LENS_DEFAULTS = {
+  bits: 10,        // length of the torch code
+  bitMs: 350,      // how long each bit lasts
+  settleMs: 120,   // frames from the start of a bit are skipped (torch + sensor lag)
+  rMin: 0.8,       // how closely a pixel must follow the code (correlation)
+  ampMin: 6,       // smallest blink that counts, in grey levels
+  maxArea: 40,     // biggest dot, in analysis pixels; bigger is a mirror or glossy surface
+  trackDist: 0.12, // how far a spot may move between scans, as a share of picture width
+};
+
+/** Plain words for a spot. Never claims it is a camera. */
+export const spotLabel = (b) => (b.confirmed ? 'Seen twice, worth a closer look' : 'Possible reflection');

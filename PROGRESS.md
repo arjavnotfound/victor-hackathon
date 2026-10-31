@@ -1,5 +1,18 @@
 # Progress
 
+## Overnight plan (31 Oct to 1 Nov)
+1. App shell: new light design (local fonts), home, shared store, app name in one constant.
+2. Camera module: rear camera 1280x720, "What this phone supports" panel, real torch with plain failure messages, exposure/focus/white balance lock, `?demo=1` kept.
+3. Lens check page (`lens.html`, built from the old `scan.html`): one Scan button, "Seen twice" vs "Possible reflection", Save this spot, Details panel with all thresholds.
+4. IR check page (`ir.html`) with pure maths in `src/ir.js` + tests.
+5. Results page, PDF report with a printed content fingerprint, "If you found something" page.
+6. Playwright end-to-end run + screenshots of every screen, looked at and fixed.
+7. MORNING_TEST.md, docs/how-it-works.md, README, this file.
+
+## Decisions made overnight
+- (filled in as I go)
+
+
 Hackathon demo: MU20 Opportunity Summit 2026.
 
 | Step | What | Status |
