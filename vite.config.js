@@ -4,9 +4,12 @@ import { resolve } from 'node:path';
 
 // HTTPS is needed so Android Chrome allows camera + torch access over Wi-Fi.
 // --host (in package.json) makes the server reachable at https://<mac-ip>:5173
+// NO_SSL=1 serves plain http on port 5180 (localhost only needs no certificate;
+// used for automated screenshots and the laptop browser pane).
+const noSsl = !!process.env.NO_SSL;
 export default defineConfig({
-  plugins: [basicSsl()],
-  server: { host: true, port: 5173 },
+  plugins: noSsl ? [] : [basicSsl()],
+  server: { host: true, port: noSsl ? 5180 : 5173 },
   worker: { format: 'es' },
   build: {
     rollupOptions: {
