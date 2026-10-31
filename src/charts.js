@@ -1,7 +1,7 @@
 // Small canvas charts (no library). Each takes a theme so the same chart can
 // be drawn dark for the screen and light for the PDF.
 
-export const DARK = { bg: '#151922', grid: '#2a3142', text: '#9aa3b5', line: '#4cc2ff', band: 'rgba(255,181,71,.16)', step: '#ffb547', colors: ['#4cc2ff', '#ff5c6c', '#3ddc84', '#c58cff'] };
+export const DARK = { bg: '#0e0e0f', grid: '#202023', text: '#8b8b90', line: '#ededee', band: 'rgba(255,255,255,.07)', step: '#e5b45a', colors: ['#ededee', '#eb6b6b', '#6fcf97', '#8b8b90'] };
 export const LIGHT = { bg: '#ffffff', grid: '#dde1e8', text: '#555e6e', line: '#0b6fb8', band: 'rgba(255,170,40,.22)', step: '#c77700', colors: ['#0b6fb8', '#c62839', '#1a8a4a', '#7a3fc2'] };
 
 function setup(canvas, w, h) {

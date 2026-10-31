@@ -3,98 +3,110 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0b0d12" />
-  <title>VICTOR — Wi-Fi challenge</title>
+  <meta name="theme-color" content="#0e0e0f" />
+  <title>VICTOR — Wi-Fi test</title>
   <link rel="stylesheet" href="/src/style.css" />
   <style>
     #flicker { position: fixed; inset: 0; z-index: 50; display: none; background: #777; color: #fff; }
     #flicker.on { display: block; }
-    #flicker .info { position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font: 600 15px system-ui; mix-blend-mode: difference; }
-    #flicker .count { position: absolute; inset: 0; display: grid; place-items: center; font: 800 120px system-ui; }
-    #flicker .bar { position: absolute; left: 0; bottom: 0; height: 6px; background: var(--accent); }
-    .drop { border: 2px dashed var(--line); border-radius: var(--radius); padding: 28px; text-align: center; cursor: pointer; }
-    .drop.over { border-color: var(--accent); background: #4cc2ff11; }
-    .verdict { font-size: 22px; font-weight: 800; }
+    #flicker .info { position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font: 500 14px system-ui; mix-blend-mode: difference; }
+    #flicker .count { position: absolute; inset: 0; display: grid; place-items: center; font: 700 96px system-ui; }
+    #flicker .bar { position: absolute; left: 0; bottom: 0; height: 4px; background: #fff; mix-blend-mode: difference; }
+    .step-n { color: var(--muted); font-size: 13px; margin-bottom: 4px; }
+    .drop { border: 1px dashed var(--line); border-radius: var(--radius); padding: 28px; text-align: center; cursor: pointer; color: var(--muted); }
+    .drop:hover, .drop.over { border-color: var(--muted); color: var(--text); }
+    .verdict { font-size: 26px; font-weight: 600; }
     .verdict.camera { color: var(--bad); }
     .verdict.maybe { color: var(--warn); }
     .verdict.no { color: var(--good); }
-    .scorebar { height: 8px; background: var(--panel-2); border-radius: 4px; min-width: 70px; }
-    .scorebar i { display: block; height: 100%; border-radius: 4px; background: var(--accent); }
+    .scorebar { display: none; }
     tbody tr { cursor: pointer; }
-    tbody tr.sel { background: #4cc2ff14; }
+    tbody tr.sel td { color: var(--text); background: var(--panel); }
     .table-wrap { overflow-x: auto; }
-    .hash { word-break: break-all; font-size: 15px; background: var(--bg); padding: 10px; border-radius: 8px; }
-    .warn-box { border-left: 3px solid var(--warn); padding-left: 10px; }
-    ol li { margin: 4px 0; }
+    .hash { word-break: break-all; font-size: 13px; background: var(--panel); padding: 10px 12px; border-radius: 8px; }
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+    @media (max-width: 520px) { .fields { grid-template-columns: 1fr; } }
+    ol { padding-left: 20px; margin: 10px 0; }
+    ol li { margin: 4px 0; font-size: 14px; }
+    #traffic, #rssi { width: 100%; height: auto; }
+    #traffic { margin: 16px 0 6px; }
   </style>
 </head>
 <body>
   <header class="top">
     <a class="brand" href="/">VICTOR</a>
-    <nav><a href="/scan.html">Lens scan</a><a class="on" href="/challenge.html">Wi-Fi challenge</a></nav>
+    <nav><a href="/scan.html">Lens scan</a><a class="on" href="/challenge.html">Wi-Fi test</a></nav>
   </header>
 
   <main class="wrap">
-    <h1>Wi-Fi challenge</h1>
-    <p class="muted">The screen flashes a secret pattern at the suspicious object. A streaming camera sends more data when its picture changes, so its Wi-Fi traffic follows the pattern. Nothing else in the room can.</p>
+    <h1>Wi-Fi test</h1>
+    <p class="muted">Flash a secret pattern at the object. If it's a camera that streams, its Wi-Fi traffic will follow the pattern.</p>
 
     <section class="card">
-      <h2>1. Run the challenge</h2>
-      <ol class="muted">
-        <li>On the Mac: open <b>Wireless Diagnostics → Window → Sniffer</b>, pick the channel and press <b>Start</b>.</li>
-        <li>Point this screen at the object from 0.5 to 2 m, as close to its "eye" as you can.</li>
-        <li>Press Start. Keep the screen pointed at it for about 25 seconds.</li>
-        <li>Stop the Sniffer. The file is saved in <span class="mono">/var/tmp/</span>.</li>
-      </ol>
-      <p class="small warn-box">The screen will flash. Do not look at it if flashing lights affect you.</p>
-      <div class="row">
-        <button id="startBtn" class="big-btn">Start challenge</button>
-        <span class="muted small">12 bits × 2 s, plus a 3 s countdown</span>
-      </div>
+      <div class="step-n">Step 1</div>
+      <h2>Flash the pattern</h2>
+      <p class="muted small">Start the Mac Sniffer first, then point this screen at the object for about 25 seconds. The screen will flash.</p>
+      <button id="startBtn" class="big-btn">Start</button>
+      <details>
+        <summary>How to record Wi-Fi on the Mac</summary>
+        <ol class="muted">
+          <li>Open Wireless Diagnostics → Window → Sniffer, pick the channel, press Start.</li>
+          <li>Run the pattern from 0.5–2 m away.</li>
+          <li>Press Stop. The file is saved in <span class="mono">/var/tmp/</span>.</li>
+        </ol>
+      </details>
     </section>
 
     <section class="card">
-      <h2>2. Analyze the capture</h2>
-      <div class="grid2">
-        <label>Secret code (12 bits)<input id="codeIn" type="text" class="mono" placeholder="e.g. 101100101101" /></label>
-        <label>Challenge start (your clock)<input id="startIn" type="text" class="mono" placeholder="not recorded" /></label>
-      </div>
-      <p id="sessionNote" class="small muted"></p>
+      <div class="step-n">Step 2</div>
+      <h2>Drop the capture</h2>
       <div id="drop" class="drop">
-        <b>Drop the .pcap or .pcapng file here</b><br /><span class="muted small">or tap to choose it. It never leaves this computer.</span>
+        Drop a .pcap or .pcapng file, or click to choose
         <input id="fileIn" type="file" accept=".pcap,.pcapng,.cap" hidden />
       </div>
-      <div class="row" style="margin-top:12px">
-        <button id="demoBtn">Run demo replay</button>
-        <span class="muted small">No camera handy? Simulates a room with one hidden camera and four other devices.</span>
+      <p id="progress" class="muted small" style="margin-top:10px"></p>
+      <div class="row small">
+        <button id="demoBtn">Try with sample data</button>
       </div>
-      <p id="progress" class="muted small"></p>
+      <details>
+        <summary>Code and start time</summary>
+        <p id="sessionNote" class="small muted" style="margin-top:8px"></p>
+        <div class="fields">
+          <label>Secret code<input id="codeIn" type="text" class="mono" placeholder="101100101101" /></label>
+          <label>Start time<input id="startIn" type="text" class="mono" placeholder="not recorded" /></label>
+        </div>
+      </details>
     </section>
 
     <section id="results" class="card" hidden>
-      <h2>3. Result</h2>
+      <div class="step-n">Result</div>
       <div id="verdict" class="verdict"></div>
       <p id="verdictSub" class="muted"></p>
       <canvas id="traffic"></canvas>
-      <p class="small muted">Shaded = screen flickering ("1" bits). Blue = traffic every 100 ms. Orange steps = average in each bit. A camera's orange steps go up and down with the shading.</p>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>#</th><th>Device (MAC)</th><th>Maker</th><th>Score</th><th>p-value</th><th>Delay</th><th>Signal</th><th>Verdict</th></tr></thead>
-          <tbody id="devTable"></tbody>
-        </table>
-      </div>
-      <h3 style="margin-top:18px">Signal strength</h3>
-      <canvas id="rssi"></canvas>
-      <p class="small muted">Stronger signal (closer to 0) usually means closer. Walk toward the object with the Sniffer running to check.</p>
-      <p id="capInfo" class="small muted"></p>
+      <p class="small muted">Shaded = screen flashing. The line should rise inside the shaded parts if it's a camera.</p>
+      <details>
+        <summary>All devices</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Device</th><th>Maker</th><th>Score</th><th>p</th><th>Signal</th><th></th></tr></thead>
+            <tbody id="devTable"></tbody>
+          </table>
+        </div>
+      </details>
+      <details>
+        <summary>Signal strength</summary>
+        <canvas id="rssi"></canvas>
+        <p id="capInfo" class="small muted" style="margin-top:8px"></p>
+      </details>
     </section>
 
-    <section class="card">
-      <h2>4. Evidence report</h2>
-      <p class="muted">A PDF with the time, the code, the device, the graphs and your lens-scan snapshots (<span id="snapCount">0</span> saved on this device).</p>
-      <button id="reportBtn" class="primary">Download evidence report (PDF)</button>
+    <section id="reportSec" class="card" hidden>
+      <div class="step-n">Proof</div>
+      <h2>Evidence report</h2>
+      <p class="muted small">A PDF with the time, code, device, graphs and <span id="snapCount">0</span> lens snapshots.</p>
+      <button id="reportBtn" class="primary">Download PDF</button>
       <div id="hashBox" hidden>
-        <p class="small muted" style="margin-top:14px">SHA-256 fingerprint of this PDF. Write it down or photograph it. If the file is changed, this will not match.</p>
+        <p class="small muted" style="margin-top:14px">SHA-256 of the PDF. Keep it: if the file is edited, it won't match.</p>
         <div id="hash" class="mono hash"></div>
       </div>
     </section>

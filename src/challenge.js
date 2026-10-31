@@ -107,7 +107,7 @@ function runDemo() {
   const startMs = Date.now() - 40000;
   session = { code, startMs, bitMs: BIT_MS };
   showSession();
-  $('sessionNote').textContent = 'Demo: simulated capture with one hidden camera and four other devices.';
+  $('sessionNote').textContent = 'Sample data: one hidden camera and four other devices.';
   fileName = 'demo (simulated)';
   isDemo = true;
   worker.postMessage({ type: 'demo', seed: Math.floor(Math.random() * 1e6), opts: session });
@@ -123,6 +123,7 @@ const VERDICT = {
 
 function showResult() {
   $('results').hidden = false;
+  $('reportSec').hidden = false;
   const devs = result.devices;
   if (!devs.length) {
     $('verdict').textContent = 'No busy devices in this capture';
@@ -132,21 +133,19 @@ function showResult() {
   }
   const top = devs[0];
   const [title, cls] = VERDICT[top.verdict];
-  $('verdict').textContent = `${title}${isDemo ? ' (demo)' : ''}`;
+  $('verdict').textContent = `${title}${isDemo ? ' (sample data)' : ''}`;
   $('verdict').className = cls;
   $('verdictSub').textContent = top.verdict === 'no'
     ? 'No device\'s traffic followed the code. If you suspect a camera, try another channel or get closer.'
-    : `${top.mac} (${top.vendor}) followed the code with score ${top.score.toFixed(2)} and p-value ${top.p.toFixed(3)}. ` +
-      (top.verdict === 'camera' ? 'To be sure, run the challenge once more with a new code.' : 'Run the challenge again to check.');
+    : `${top.mac} · ${top.vendor} · score ${top.score.toFixed(2)}. ` +
+      (top.verdict === 'camera' ? 'Run it once more to be sure.' : 'Run it again to check.');
   $('devTable').innerHTML = devs.slice(0, 12).map((d, i) => `
     <tr data-i="${i}" class="${i === selected ? 'sel' : ''}">
-      <td>${i + 1}</td>
       <td class="mono">${d.mac}</td>
-      <td>${d.vendor}${d.camChip ? ' <span class="pill warn">camera chip</span>' : ''}</td>
-      <td><div class="scorebar"><i style="width:${Math.round(d.score * 100)}%"></i></div>${d.score.toFixed(2)}</td>
+      <td>${d.vendor}</td>
+      <td class="mono">${d.score.toFixed(2)}</td>
       <td class="mono">${d.p.toFixed(3)}</td>
-      <td class="mono">${d.offsetMs} ms</td>
-      <td class="mono">${d.meanRssi != null ? d.meanRssi.toFixed(0) + ' dBm' : '—'}</td>
+      <td class="mono">${d.meanRssi != null ? d.meanRssi.toFixed(0) : '—'}</td>
       <td><span class="pill ${d.verdict === 'camera' ? 'bad' : d.verdict === 'maybe' ? 'warn' : 'good'}">${d.verdict}</span></td>
     </tr>`).join('');
   drawCharts();
@@ -210,4 +209,5 @@ $('demoBtn').addEventListener('click', runDemo);
 $('reportBtn').addEventListener('click', makeReport);
 window.addEventListener('resize', drawCharts);
 $('snapCount').textContent = getSnapshots().length;
+if (getSnapshots().length) $('reportSec').hidden = false; // lens-only report is still useful
 showSession();
