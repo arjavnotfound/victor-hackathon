@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.pcap
+*.pcapng
+.DS_Store
+.venv/
+test-results/
+playwright-report/
+demo/

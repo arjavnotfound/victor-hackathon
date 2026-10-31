@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VICTOR — hidden camera finder</title>
+  <link rel="stylesheet" href="/src/style.css" />
+  <style>
+    .hero { padding: 40px 0 8px; }
+    .hero h1 { font-size: clamp(30px, 6vw, 52px); }
+    .hero p { font-size: 19px; max-width: 640px; }
+    .tool h2 { font-size: 22px; }
+    .tool .btn { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/">VICTOR</a>
+    <nav><a href="/scan.html">Lens scan</a><a href="/challenge.html">Wi-Fi challenge</a></nav>
+  </header>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Find hidden cameras by making them react.</h1>
+      <p class="muted">Every hidden camera has a lens, and if it streams, it has to react to what it sees. We test both, using a secret random code that nothing else in the room can fake.</p>
+    </section>
+    <section class="grid2">
+      <div class="card tool">
+        <h2>1. Lens scan</h2>
+        <p class="muted">Use your Android phone. The torch blinks a secret pattern. Any tiny dot that blinks back in the same pattern is a lens, and gets a circle.</p>
+        <a class="btn primary" href="/scan.html">Open lens scan</a>
+      </div>
+      <div class="card tool">
+        <h2>2. Wi-Fi challenge</h2>
+        <p class="muted">The screen flashes a secret pattern at the suspicious object. A camera that streams sends more data when the picture changes. We find the device whose traffic follows the pattern.</p>
+        <a class="btn primary" href="/challenge.html">Open Wi-Fi challenge</a>
+      </div>
+    </section>
+    <section class="card">
+      <h2>3. Proof you can share</h2>
+      <p class="muted">Every test can be saved as a PDF report with the time, the code, the device found, the graphs and a SHA-256 fingerprint. If anyone edits the report, the fingerprint will not match.</p>
+    </section>
+    <p class="muted small">Everything runs in this browser. Nothing is uploaded. Team VICTOR — MU20 Opportunity Summit 2026.</p>
+  </main>
+</body>
+</html>
