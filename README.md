@@ -11,9 +11,15 @@ Built by Team VICTOR for the MU20 Opportunity Summit 2026.
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 <!-- SCREENSHOTS -->
-| Home | Lens scanner | Wi-Fi challenge result |
-|---|---|---|
-| ![Home](docs/screenshots/home.png) | ![Lens scanner](docs/screenshots/scan.png) | ![Wi-Fi result](docs/screenshots/challenge-result.png) |
+| Home | Lens check | IR check | Results |
+|---|---|---|---|
+| ![Home](docs/screenshots/home.png) | ![Lens check](docs/screenshots/lens-found.png) | ![IR check](docs/screenshots/ir-found.png) | ![Results](docs/screenshots/results-report.png) |
+
+| If you found something | What this phone supports | Details panel | Wi-Fi check result |
+|---|---|---|---|
+| ![Help](docs/screenshots/help.png) | ![Phone support](docs/screenshots/lens-phone.png) | ![Details](docs/screenshots/lens-details.png) | ![Wi-Fi result](docs/screenshots/challenge-result.png) |
+
+Screenshots are from the simulated demo camera in desktop Chromium, not a real room.
 <!-- /SCREENSHOTS -->
 
 ---
@@ -53,7 +59,9 @@ We never just "look" for a camera. We send a **secret random code** (a pattern o
 ### Layer 1: the lens (phone torch)
 A camera lens with a sensor behind it bounces light straight back toward where it came from (the same effect that makes a cat's eyes glow in a car's headlights). The phone's torch sits right next to its camera, so a hidden lens shows up as a tiny bright dot that switches on and off exactly with the torch.
 
-`scan.html` flashes the torch in a random 10-bit code and checks every pixel to see if it blinks in step with that code. Only small dots that match the code get a circle. A dot that is found again after you move a little is marked **confirmed**. There is also an **IR mode** for cameras with night-vision LEDs, which glow purple on many phone cameras in the dark.
+`lens.html` flashes the torch in a random 10-bit code and checks every pixel to see if it blinks in step with that code. Only small dots that match the code get a circle. A dot seen once is a **Possible reflection**; a dot found again after you move a little is **Seen twice, worth a closer look**.
+
+`ir.html` is the **IR check** for cameras with night-vision lights, which show up as white or purple dots on many phone cameras in the dark. Small bright dots that stay on for about a second, or blink steadily, get a circle. Big lamps and one-frame flashes are ignored.
 
 ### Layer 2: Wi-Fi (screen flicker)
 A streaming camera compresses its video. When the picture changes a lot, the video needs more data, so the camera sends more Wi-Fi traffic. When the picture is still, it sends less.
@@ -70,7 +78,7 @@ One tap makes a PDF with the time, the secret code, the device's Wi-Fi address a
 ```mermaid
 flowchart LR
   subgraph Phone["Android phone (Chrome)"]
-    S[scan.html<br/>torch code + lens finder]
+    S[lens.html + ir.html<br/>torch code + lens finder<br/>night-vision light finder]
   end
   subgraph Laptop["Mac (browser)"]
     C[challenge.html<br/>screen flicker code]
@@ -146,7 +154,7 @@ With 12 bits, a random device lines up perfectly by chance about once in 4,096 t
 
 ## Demo flow (5 minutes)
 
-1. **Lens scan.** Open `scan.html` on the phone, point at a charger with a hidden camera, press Scan. The lens gets a circle with a score; move a little, scan again, it turns **confirmed**.
+1. **Lens check.** Open the app on the phone, Start the check, point at the object, press Scan. The lens gets a circle; move a little, scan again, it becomes **Seen twice, worth a closer look**. Save the spot.
 2. **Wi-Fi challenge.** Start the Mac Sniffer, open `challenge.html`, point the flashing screen at the device, wait ~25 s, stop the Sniffer, drop the file in.
 3. **Result.** One device rises to the top with a high score and tiny p-value, its maker shown from its Wi-Fi address. The graph shows its traffic following the code.
 4. **Proof.** Download the PDF and show the SHA-256 on screen.
@@ -172,8 +180,11 @@ Open `https://localhost:5173` on the Mac. On an Android phone on the same Wi-Fi,
 
 ```bash
 npm test          # maths + analyzer tests
+npm run e2e       # clicks through every screen in Chromium, saves docs/screenshots
 npm run demo-pcap # writes demo/demo.pcap and demo/demo.json
 ```
+
+The phone flow is: Home → Lens check → IR check → Results (→ If you found something). Add `?demo=1` to any phone page to use a simulated camera on a laptop. The app name lives in `src/config.js`. See [MORNING_TEST.md](MORNING_TEST.md) for the real-phone checklist and [docs/how-it-works.md](docs/how-it-works.md) for a plain explanation.
 
 ## Honest limits
 

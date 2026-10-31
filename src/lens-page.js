@@ -105,7 +105,6 @@ async function scan() {
   busy = false;
   $('scanBtn').disabled = false;
 
-  $('debugInfo').dataset.torchMisses = torchMisses;
   if (tooManyMisses()) {
     setStatus('The torch did not switch on. This phone or browser may not allow it. The IR check still works.', true);
     return;
@@ -133,7 +132,7 @@ async function scan() {
   $('debugInfo').innerHTML =
     `code ${codeToString(code)}<br>frames per bit ${counts.join(',')} · ${fps.toFixed(0)} fps<br>` +
     `best match ${maxR.toFixed(2)} · dots ${blobs.length} · scans ${scans}<br>` +
-    `top score ${blobs[0]?.score ?? '-'} · analysis ${W}x${H}`;
+    `top score ${blobs[0]?.score ?? '-'} · torch misses ${torchMisses} · analysis ${W}x${H}`;
 
   $('saveBtn').disabled = !spots.length;
   $('scanBtn').textContent = 'Scan again';

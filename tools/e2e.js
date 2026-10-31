@@ -41,6 +41,8 @@ await step('home loads and links through the flow', async () => {
   await shot('home');
   await page.click('text=Start the check');
   await page.waitForURL(/lens\.html/);
+  await page.goto(base + '/?demo=1');
+  assert.match(await page.getAttribute('text=Start the check', 'href'), /lens\.html\?demo=1$/);
   await page.goto(base + '/help.html');
   assert.match(await text('h1'), /If you found something/);
   await shot('help');
