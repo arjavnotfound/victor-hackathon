@@ -3,15 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f6f3ee" />
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="icon.svg" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <title>VICTOR</title>
-  <style>.hero{padding:40px 0 36px}.hero .name{letter-spacing:.14em;color:var(--accent);margin-bottom:18px;font-size:14px;font-weight:600}.hero h1{font-size:34px}.steps{counter-reset:s;margin:0 0 32px;padding:0;list-style:none}.steps li{counter-increment:s;gap:14px;padding:10px 0;display:flex}.steps li:before{content:counter(s);background:var(--accent-soft);width:28px;height:28px;color:var(--accent);border-radius:50%;flex:none;place-items:center;margin-top:1px;font-size:14px;font-weight:600;display:grid}.more{margin-top:40px}</style>
-  <script type="module" crossorigin src="./assets/main-BUS7fDXc.js"></script>
+  <style>.hero{padding:48px 4px 28px}.hero .name{letter-spacing:.12em;color:var(--accent);margin-bottom:14px;font-size:13px;font-weight:600}.step{align-items:flex-start;gap:14px;display:flex}.step .n{background:var(--accent-soft);width:28px;height:28px;color:var(--accent);border-radius:50%;flex:none;place-items:center;margin-top:1px;font-size:15px;font-weight:600;display:grid}.start{margin-top:20px}.qr{display:none}@media (width>=900px) and (hover:hover){.qr{align-items:center;gap:16px;margin-top:28px;display:flex}.qr canvas{background:#fff;border-radius:10px;flex:none;width:120px;height:120px;padding:8px}}</style>
+  <script type="module" crossorigin src="./assets/main-B3xl_obA.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/config-BEN-tLYE.js">
-  <link rel="modulepreload" crossorigin href="./assets/ui-DPQzKwb9.js">
-  <link rel="stylesheet" crossorigin href="./assets/ui-fZuxDoSV.css">
+  <link rel="modulepreload" crossorigin href="./assets/ui-TI05uVEd.js">
+  <link rel="modulepreload" crossorigin href="./assets/preload-helper-wUDNLMAe.js">
+  <link rel="stylesheet" crossorigin href="./assets/ui-DZxvSkRf.css">
 <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
 <body>
   <main class="page">
@@ -20,21 +22,27 @@
       <h1 id="tagline">A 60-second privacy check before you settle into a room.</h1>
     </section>
 
-    <ol class="steps">
-      <li><span><b>Lens check.</b> <span class="muted">The torch blinks a secret pattern. A camera lens sends it straight back.</span></span></li>
-      <li><span><b>IR check.</b> <span class="muted">In the dark, look for night-vision lights your eyes cannot see.</span></span></li>
-      <li><span><b>Results.</b> <span class="muted">See what we checked and save a report.</span></span></li>
-    </ol>
-
-    <a class="btn primary" href="lens.html">Start the check</a>
-
-    <ul class="list more">
-      <li><a href="results.html"><span class="label">Results</span><span class="hint">From this phone</span></a></li>
-      <li><a href="help.html"><span class="label">If you found something</span><span class="hint">What to do next</span></a></li>
-      <li><a href="challenge.html"><span class="label">Wi-Fi check</span><span class="hint">Laptop step, needs a Mac</span></a></li>
+    <ul class="group">
+      <li><div class="step"><span class="n">1</span><span><b>Lens check.</b> <span class="muted">The torch blinks a secret pattern. A camera lens sends it straight back.</span></span></div></li>
+      <li><div class="step"><span class="n">2</span><span><b>IR check.</b> <span class="muted">In the dark, look for night-vision lights your eyes cannot see.</span></span></div></li>
+      <li><div class="step"><span class="n">3</span><span><b>Results.</b> <span class="muted">See what was checked and save a report.</span></span></div></li>
     </ul>
 
-    <p class="muted small" style="margin-top:28px">Runs on this phone. Nothing is uploaded.</p>
+    <a class="btn primary start" href="lens.html">Start the check</a>
+
+    <div class="label">More</div>
+    <ul class="group">
+      <li><a href="results.html"><span class="grow">Results</span><span class="hint">This phone</span><span class="chev" aria-hidden="true">&rsaquo;</span></a></li>
+      <li><a href="network.html"><span class="grow">Network check</span><span class="hint">Android app</span><span class="chev" aria-hidden="true">&rsaquo;</span></a></li>
+      <li><a href="help.html"><span class="grow">If you found something</span><span class="chev" aria-hidden="true">&rsaquo;</span></a></li>
+      <li><a href="challenge.html"><span class="grow">Wi-Fi check</span><span class="hint">Laptop step</span><span class="chev" aria-hidden="true">&rsaquo;</span></a></li>
+    </ul>
+    <p class="foot">Runs on this phone. Nothing is uploaded.</p>
+
+    <div class="qr" id="qrBox">
+      <canvas id="qr"></canvas>
+      <p class="muted small" style="margin:0">Open this on an Android phone: scan the code with the camera, then tap Start the check.</p>
+    </div>
   </main>
 </body>
 </html>

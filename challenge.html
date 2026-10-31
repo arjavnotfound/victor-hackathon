@@ -3,26 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0e0e0f" />
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="icon.svg" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <title>VICTOR — Wi-Fi test</title>
-  <style>#flicker{z-index:50;color:#fff;background:#777;display:none;position:fixed;inset:0}#flicker.on{display:block}#flicker .info{text-align:center;mix-blend-mode:difference;font:500 14px system-ui;position:absolute;bottom:18px;left:0;right:0}#flicker .count{place-items:center;font:700 96px system-ui;display:grid;position:absolute;inset:0}#flicker .bar{mix-blend-mode:difference;background:#fff;height:4px;position:absolute;bottom:0;left:0}#flicker .skip{color:#fff;z-index:2;background:#000a;border-color:#fff4;position:absolute;top:16px;right:16px}.step-n{color:var(--muted);margin-bottom:4px;font-size:13px}.drop{border:1px dashed var(--line);border-radius:var(--radius);text-align:center;cursor:pointer;color:var(--muted);padding:28px}.drop:hover,.drop.over{border-color:var(--muted);color:var(--text)}.verdict{font-size:26px;font-weight:600}.verdict.camera{color:var(--bad)}.verdict.maybe{color:var(--warn)}.verdict.no{color:var(--good)}.scorebar{display:none}tbody tr{cursor:pointer}tbody tr.sel td{color:var(--text);background:var(--panel)}.table-wrap{overflow-x:auto}.hash{word-break:break-all;background:var(--panel);border-radius:8px;padding:10px 12px;font-size:13px}.fields{grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;display:grid}@media (width<=520px){.fields{grid-template-columns:1fr}}ol{margin:10px 0;padding-left:20px}ol li{margin:4px 0;font-size:14px}#traffic,#rssi{width:100%;height:auto}#traffic{margin:16px 0 6px}</style>
-  <script type="module" crossorigin src="./assets/challenge-BQn3S4GU.js"></script>
+  <title>VICTOR · Wi-Fi check</title>
+  <style>#flicker{z-index:50;color:#fff;background:#777;display:none;position:fixed;inset:0}#flicker.on{display:block}#flicker .info{text-align:center;mix-blend-mode:difference;font:500 14px system-ui;position:absolute;bottom:18px;left:0;right:0}#flicker .count{place-items:center;font:700 96px system-ui;display:grid;position:absolute;inset:0}#flicker .bar{mix-blend-mode:difference;background:#fff;height:4px;position:absolute;bottom:0;left:0}#flicker .skip{color:#fff;z-index:2;background:#000a;border-color:#fff4;position:absolute;top:16px;right:16px}.step-n{color:var(--muted);margin-bottom:4px;font-size:13px}.drop{border:1.5px dashed var(--line);border-radius:var(--radius);text-align:center;cursor:pointer;color:var(--muted);padding:28px}.drop:hover,.drop.over{border-color:var(--muted);color:var(--text)}.verdict{letter-spacing:-.02em;font-size:28px;font-weight:700}.verdict.camera{color:var(--flag)}.verdict.maybe{color:var(--warn)}.verdict.no{color:var(--good)}.scorebar{display:none}tbody tr{cursor:pointer}tbody tr.sel td{color:var(--text);background:var(--panel)}.table-wrap{overflow-x:auto}.hash{word-break:break-all;background:var(--bg);border-radius:8px;padding:10px 12px;font-size:13px}.fields{grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;display:grid}@media (width<=520px){.fields{grid-template-columns:1fr}}ol{margin:10px 0;padding-left:20px}ol li{margin:4px 0;font-size:14px}#traffic,#rssi{width:100%;height:auto}#traffic{margin:16px 0 6px}</style>
+  <script type="module" crossorigin src="./assets/challenge-DaRkzEn0.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/config-BEN-tLYE.js">
   <link rel="modulepreload" crossorigin href="./assets/code-Dygr-lMv.js">
   <link rel="modulepreload" crossorigin href="./assets/store-Clq8ImiC.js">
-  <link rel="modulepreload" crossorigin href="./assets/report-D87KWX5q.js">
-  <link rel="stylesheet" crossorigin href="./assets/challenge-Cga580xW.css">
+  <link rel="modulepreload" crossorigin href="./assets/preload-helper-wUDNLMAe.js">
+  <link rel="modulepreload" crossorigin href="./assets/report-2Hzr-9XX.js">
+  <link rel="stylesheet" crossorigin href="./assets/challenge-D94Kfxei.css">
 <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
 <body>
   <header class="top">
     <a class="brand" href="./">VICTOR</a>
-    <nav><a href="./">Phone checks</a><a href="results.html">Results</a><a class="on" href="challenge.html">Wi-Fi test</a></nav>
+    <nav><a href="./">Phone checks</a><a href="results.html">Results</a><a class="on" href="challenge.html">Wi-Fi check</a></nav>
   </header>
 
   <main class="wrap">
-    <h1>Wi-Fi test</h1>
+    <h1>Wi-Fi check</h1>
     <p class="muted">Flash a secret pattern at the object. If it's a camera that streams, its Wi-Fi traffic will follow the pattern.</p>
 
     <section class="card">

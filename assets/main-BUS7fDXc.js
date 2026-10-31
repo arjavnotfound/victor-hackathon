@@ -1,1 +1,0 @@
-import{n as e}from"./config-BEN-tLYE.js";import{n as t}from"./ui-DPQzKwb9.js";t(``),document.getElementById(`tagline`).textContent=e;
