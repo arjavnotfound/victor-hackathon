@@ -12,6 +12,7 @@
     #flicker .info { position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font: 500 14px system-ui; mix-blend-mode: difference; }
     #flicker .count { position: absolute; inset: 0; display: grid; place-items: center; font: 700 96px system-ui; }
     #flicker .bar { position: absolute; left: 0; bottom: 0; height: 4px; background: #fff; mix-blend-mode: difference; }
+    #flicker .skip { position: absolute; top: 16px; right: 16px; background: #000a; color: #fff; border-color: #fff4; z-index: 2; }
     .step-n { color: var(--muted); font-size: 13px; margin-bottom: 4px; }
     .drop { border: 1px dashed var(--line); border-radius: var(--radius); padding: 28px; text-align: center; cursor: pointer; color: var(--muted); }
     .drop:hover, .drop.over { border-color: var(--muted); color: var(--text); }
@@ -46,7 +47,7 @@
       <div class="step-n">Step 1</div>
       <h2>Flash the pattern</h2>
       <p class="muted small">Start the Mac Sniffer first, then point this screen at the object for about 25 seconds. The screen will flash.</p>
-      <button id="startBtn" class="big-btn">Start</button>
+      <div class="row"><button id="startBtn" class="big-btn">Start</button><span id="codeLine" class="mono small muted"></span></div>
       <details>
         <summary>How to record Wi-Fi on the Mac</summary>
         <ol class="muted">
@@ -61,7 +62,8 @@
       <div class="step-n">Step 2</div>
       <h2>Drop the capture</h2>
       <div id="drop" class="drop">
-        Drop a .pcap or .pcapng file, or click to choose
+        Drop a .pcap or .pcapng file, or click to choose<br />
+        <span class="small">Sniffer files are in Downloads → Sniffer captures</span>
         <input id="fileIn" type="file" accept=".pcap,.pcapng,.cap" hidden />
       </div>
       <p id="progress" style="margin-top:12px"></p>
@@ -124,7 +126,7 @@
     </section>
   </main>
 
-  <div id="flicker"><div class="count" id="count"></div><div class="info" id="flickInfo"></div><div class="bar" id="flickBar"></div></div>
+  <div id="flicker"><div class="count" id="count"></div><div class="info" id="flickInfo"></div><div class="bar" id="flickBar"></div><button id="skipBtn" class="skip">Skip</button></div>
 
   <script type="module" src="/src/challenge.js"></script>
 </body>

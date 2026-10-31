@@ -29,6 +29,7 @@ worker.onmessage = (e) => {
 };
 
 function showSession() {
+  $('codeLine').textContent = session ? `Saved code: ${codeToString(session.code)}` : '';
   if (!session) { $('sessionNote').textContent = 'No challenge run yet on this device. Run one, or type the code and start time.'; return; }
   $('codeIn').value = codeToString(session.code);
   $('startIn').value = session.startMs ? new Date(session.startMs).toISOString() : '';
@@ -46,28 +47,38 @@ function showSession() {
  */
 async function runChallenge() {
   const code = makeCode(12);
+  // The code is saved right away, so it is kept even if you skip the flashing.
+  // Start time = when bit 1 begins (after the 3 s countdown).
+  session = { code, startMs: Date.now() + 3000, bitMs: BIT_MS };
+  saveChallenge(session);
+  isDemo = false;
+  showSession();
+
   const fl = $('flicker');
   fl.classList.add('on');
   try { await fl.requestFullscreen?.(); } catch { /* fine without */ }
   let wake = null;
   try { wake = await navigator.wakeLock?.request('screen'); } catch { /* fine */ }
-  let cancelled = false;
-  const cancel = () => { cancelled = true; };
-  fl.addEventListener('click', cancel, { once: true });
+  let skipped = false;
+  $('skipBtn').onclick = (e) => { e.stopPropagation(); skipped = true; };
 
-  for (let c = 3; c > 0 && !cancelled; c--) {
+  for (let c = 3; c > 0 && !skipped; c--) {
     fl.style.background = '#777'; $('count').textContent = c;
-    $('flickInfo').textContent = 'Point the screen at the object. Tap to cancel.';
+    $('flickInfo').textContent = 'Point the screen at the object.';
     await new Promise((r) => setTimeout(r, 1000));
   }
   $('count').textContent = '';
-  const startMs = Date.now();
+  if (!skipped) {
+    session.startMs = Date.now(); // exact moment bit 1 starts
+    saveChallenge(session);
+    showSession();
+  }
   const t0 = performance.now();
   const total = code.length * BIT_MS;
   await new Promise((resolve) => {
     const tick = () => {
       const el = performance.now() - t0;
-      if (cancelled || el >= total) return resolve();
+      if (skipped || el >= total) return resolve();
       const i = Math.floor(el / BIT_MS);
       if (code[i]) fl.style.background = Math.floor(el / (500 / FLICKER_HZ)) % 2 ? '#fff' : '#000';
       else fl.style.background = '#777';
@@ -78,14 +89,12 @@ async function runChallenge() {
     tick();
   });
   fl.classList.remove('on');
+  $('flickBar').style.width = '0';
   try { await document.exitFullscreen?.(); } catch { /* fine */ }
   wake?.release?.();
-  if (cancelled) return;
-  session = { code, startMs, bitMs: BIT_MS };
-  saveChallenge(session);
-  isDemo = false;
-  showSession();
-  $('progress').textContent = 'Done. Now stop the Sniffer on the Mac and drop the capture file above.';
+  $('progress').textContent = skipped
+    ? 'Skipped. The code is saved and will be used for the next file you drop.'
+    : 'Done. Stop the Sniffer on the Mac and drop the capture file below.';
 }
 
 // ---------- 2. analyze ----------
@@ -224,7 +233,27 @@ document.addEventListener('drop', (e) => {
   if (e.dataTransfer.files[0]) analyzeFile(e.dataTransfer.files[0]);
 });
 const drop = $('drop');
-drop.addEventListener('click', () => $('fileIn').click());
+drop.addEventListener('click', pickFile);
+
+/**
+ * Open the file dialog. Chrome's file picker can start in Downloads, where
+ * "Sniffer captures" is a shortcut to /var/tmp (where the Mac Sniffer saves).
+ * The `id` makes Chrome reopen the last folder you picked from, so after the
+ * first time it opens straight in /var/tmp. Other browsers use a plain input.
+ */
+async function pickFile() {
+  if (!window.showOpenFilePicker) return $('fileIn').click();
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      id: 'victor-sniffer',
+      startIn: 'downloads',
+      types: [{ description: 'Wi-Fi capture', accept: { 'application/octet-stream': ['.pcap', '.pcapng', '.cap'] } }],
+    });
+    analyzeFile(await handle.getFile());
+  } catch (e) {
+    if (e.name !== 'AbortError') $('fileIn').click();
+  }
+}
 $('fileIn').addEventListener('change', (e) => e.target.files[0] && analyzeFile(e.target.files[0]));
 drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
 drop.addEventListener('dragleave', () => drop.classList.remove('over'));
