@@ -4,8 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0e0e0f" />
+  <link rel="icon" href="icon.svg" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <title>VICTOR — Wi-Fi test</title>
-  <link rel="stylesheet" href="/src/style.css" />
+  <link rel="stylesheet" href="src/style.css" />
   <style>
     #flicker { position: fixed; inset: 0; z-index: 50; display: none; background: #777; color: #fff; }
     #flicker.on { display: block; }
@@ -35,8 +37,8 @@
 </head>
 <body>
   <header class="top">
-    <a class="brand" href="/">VICTOR</a>
-    <nav><a href="/">Phone checks</a><a href="/results.html">Results</a><a class="on" href="/challenge.html">Wi-Fi test</a></nav>
+    <a class="brand" href="./">VICTOR</a>
+    <nav><a href="./">Phone checks</a><a href="results.html">Results</a><a class="on" href="challenge.html">Wi-Fi test</a></nav>
   </header>
 
   <main class="wrap">
@@ -128,6 +130,6 @@
 
   <div id="flicker"><div class="count" id="count"></div><div class="info" id="flickInfo"></div><div class="bar" id="flickBar"></div><button id="skipBtn" class="skip">Skip</button></div>
 
-  <script type="module" src="/src/challenge.js"></script>
+  <script type="module" src="./src/challenge.js"></script>
 </body>
 </html>

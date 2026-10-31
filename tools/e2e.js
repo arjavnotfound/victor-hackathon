@@ -1,10 +1,11 @@
 // End-to-end check in desktop Chromium + screenshots of every screen.
 //   npm run e2e          (runs the checks, writes docs/screenshots/*.png)
-// Starts its own Vite server on plain http://localhost (a secure context, so
-// the camera works) and uses Chromium's fake camera.
+// Builds the app, then serves the build under /victor-hackathon/ on plain
+// http://localhost, the same sub-path as GitHub Pages (localhost is a secure
+// context, so the camera works). Uses Chromium's fake camera.
 
 import { chromium } from 'playwright';
-import { createServer } from 'vite';
+import { build, preview } from 'vite';
 import { mkdirSync, readFileSync, copyFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
@@ -13,9 +14,9 @@ const PORT = 5181;
 const SHOTS = 'docs/screenshots';
 mkdirSync(SHOTS, { recursive: true });
 
-const server = await createServer({ server: { port: PORT, strictPort: true, host: 'localhost' }, logLevel: 'error' });
-await server.listen();
-const base = `http://localhost:${PORT}`;
+await build({ logLevel: 'error' });
+const server = await preview({ base: '/victor-hackathon/', preview: { port: PORT, strictPort: true, host: 'localhost' }, logLevel: 'error' });
+const base = `http://localhost:${PORT}/victor-hackathon`;
 
 const browser = await chromium.launch({
   args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'],

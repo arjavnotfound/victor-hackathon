@@ -4,8 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f6f3ee" />
+  <link rel="icon" href="icon.svg" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <title>VICTOR · Results</title>
-  <link rel="stylesheet" href="/src/app.css" />
+  <link rel="stylesheet" href="src/app.css" />
   <style>
     .summary { font-family: var(--serif); font-size: 24px; line-height: 1.3; margin: 0 0 12px; }
     .checks { list-style: none; padding: 0; margin: 0 0 28px; border-top: 1px solid var(--line); }
@@ -25,7 +27,7 @@
 </head>
 <body>
   <main class="page">
-    <div class="topbar"><a class="back" href="/">&larr; Home</a><span class="brand" data-app-name>VICTOR</span></div>
+    <div class="topbar"><a class="back" href="./">&larr; Home</a><span class="brand" data-app-name>VICTOR</span></div>
     <h1>Results</h1>
     <p id="summary" class="summary"></p>
     <p id="limits" class="muted small"></p>
@@ -41,11 +43,11 @@
     <div class="actions">
       <button id="reportBtn" class="btn primary">Save report (PDF)</button>
       <p id="reportNote" class="muted small" hidden></p>
-      <a class="btn" href="/help.html">If you found something</a>
-      <a id="againBtn" class="btn" href="/lens.html">Check again</a>
+      <a class="btn" href="help.html">If you found something</a>
+      <a id="againBtn" class="btn" href="lens.html">Check again</a>
       <button id="clearBtn" class="clear" type="button">Clear results and start fresh</button>
     </div>
   </main>
-  <script type="module" src="/src/results-page.js"></script>
+  <script type="module" src="./src/results-page.js"></script>
 </body>
 </html>

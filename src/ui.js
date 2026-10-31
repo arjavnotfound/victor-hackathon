@@ -12,7 +12,8 @@ export function initPage(title) {
   document.title = title ? `${APP_NAME} · ${title}` : APP_NAME;
   for (const el of document.querySelectorAll('[data-app-name]')) el.textContent = APP_NAME;
   if (!isDemo) return;
-  for (const a of document.querySelectorAll('a[href^="/"]')) {
+  for (const a of document.querySelectorAll('a[href]')) {
+    if (a.origin !== location.origin) continue; // tel: links and other sites
     if (a.pathname.endsWith('challenge.html')) continue; // the Wi-Fi page has its own sample data
     a.search = 'demo=1';
   }
