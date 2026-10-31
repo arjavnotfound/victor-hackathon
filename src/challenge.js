@@ -1,0 +1,213 @@
+// Wi-Fi challenge page: flicker the code, then analyze the Mac capture.
+
+import { makeCode, codeToString } from './code.js';
+import { getChallenge, saveChallenge, getSnapshots } from './store.js';
+import { drawTraffic, drawRssi } from './charts.js';
+import { buildReport } from './report.js';
+
+const $ = (id) => document.getElementById(id);
+const BIT_MS = 2000;
+const FLICKER_HZ = 5; // fast enough to change almost every video frame's content
+
+let session = getChallenge();       // { code: [..], startMs, bitMs }
+let result = null, selected = 0, fileName = '', isDemo = false;
+
+const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+worker.onmessage = (e) => {
+  const m = e.data;
+  if (m.type === 'progress') $('progress').textContent = m.text;
+  if (m.type === 'error') { $('progress').textContent = 'Could not read that file: ' + m.text; }
+  if (m.type === 'done') { result = m.result; selected = 0; $('progress').textContent = ''; showResult(); }
+};
+
+function showSession() {
+  if (!session) { $('sessionNote').textContent = 'No challenge run yet on this device. Run one, or type the code and start time.'; return; }
+  $('codeIn').value = codeToString(session.code);
+  $('startIn').value = session.startMs ? new Date(session.startMs).toISOString() : '';
+  $('sessionNote').textContent = `Last challenge: ${new Date(session.startMs).toLocaleString()}. Code and start time are filled in for you.`;
+}
+
+// ---------- 1. flicker ----------
+
+/**
+ * Bit 1 = the screen alternates black/white 5 times a second. Every video
+ * frame the camera captures is different from the last, so its encoder must
+ * send lots of data. Bit 0 = steady grey, nothing changes, little data.
+ * The start time is taken from the wall clock (Date.now) because the Mac
+ * Sniffer stamps packets with wall-clock time too.
+ */
+async function runChallenge() {
+  const code = makeCode(12);
+  const fl = $('flicker');
+  fl.classList.add('on');
+  try { await fl.requestFullscreen?.(); } catch { /* fine without */ }
+  let wake = null;
+  try { wake = await navigator.wakeLock?.request('screen'); } catch { /* fine */ }
+  let cancelled = false;
+  const cancel = () => { cancelled = true; };
+  fl.addEventListener('click', cancel, { once: true });
+
+  for (let c = 3; c > 0 && !cancelled; c--) {
+    fl.style.background = '#777'; $('count').textContent = c;
+    $('flickInfo').textContent = 'Point the screen at the object. Tap to cancel.';
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  $('count').textContent = '';
+  const startMs = Date.now();
+  const t0 = performance.now();
+  const total = code.length * BIT_MS;
+  await new Promise((resolve) => {
+    const tick = () => {
+      const el = performance.now() - t0;
+      if (cancelled || el >= total) return resolve();
+      const i = Math.floor(el / BIT_MS);
+      if (code[i]) fl.style.background = Math.floor(el / (500 / FLICKER_HZ)) % 2 ? '#fff' : '#000';
+      else fl.style.background = '#777';
+      $('flickInfo').textContent = `bit ${i + 1} of ${code.length}`;
+      $('flickBar').style.width = `${(el / total) * 100}%`;
+      requestAnimationFrame(tick);
+    };
+    tick();
+  });
+  fl.classList.remove('on');
+  try { await document.exitFullscreen?.(); } catch { /* fine */ }
+  wake?.release?.();
+  if (cancelled) return;
+  session = { code, startMs, bitMs: BIT_MS };
+  saveChallenge(session);
+  isDemo = false;
+  showSession();
+  $('progress').textContent = 'Done. Now stop the Sniffer on the Mac and drop the capture file above.';
+}
+
+// ---------- 2. analyze ----------
+
+function readInputs() {
+  const bits = $('codeIn').value.replace(/[^01]/g, '').split('').map(Number);
+  if (bits.length < 6) throw new Error('Enter the secret code (the 12 ones and zeros).');
+  const st = $('startIn').value.trim();
+  const startMs = st ? Date.parse(st) : null;
+  return { code: bits, startMs: Number.isFinite(startMs) ? startMs : null, bitMs: BIT_MS };
+}
+
+async function analyzeFile(file) {
+  let opts;
+  try { opts = readInputs(); } catch (e) { $('progress').textContent = e.message; return; }
+  session = { ...opts };
+  fileName = file.name;
+  isDemo = false;
+  $('progress').textContent = `Loading ${file.name}…`;
+  const buffer = await file.arrayBuffer();
+  worker.postMessage({ type: 'analyze', buffer, opts }, [buffer]);
+}
+
+function runDemo() {
+  // A fresh secret code, as if the challenge had just been run 40 s ago.
+  const code = makeCode(12);
+  const startMs = Date.now() - 40000;
+  session = { code, startMs, bitMs: BIT_MS };
+  showSession();
+  $('sessionNote').textContent = 'Demo: simulated capture with one hidden camera and four other devices.';
+  fileName = 'demo (simulated)';
+  isDemo = true;
+  worker.postMessage({ type: 'demo', seed: Math.floor(Math.random() * 1e6), opts: session });
+}
+
+// ---------- 3. results ----------
+
+const VERDICT = {
+  camera: ['Camera found', 'verdict camera'],
+  maybe: ['Possible camera', 'verdict maybe'],
+  no: ['No camera reacted', 'verdict no'],
+};
+
+function showResult() {
+  $('results').hidden = false;
+  const devs = result.devices;
+  if (!devs.length) {
+    $('verdict').textContent = 'No busy devices in this capture';
+    $('verdict').className = 'verdict no';
+    $('verdictSub').textContent = 'Check the Sniffer channel and that the capture covers the challenge time.';
+    return;
+  }
+  const top = devs[0];
+  const [title, cls] = VERDICT[top.verdict];
+  $('verdict').textContent = `${title}${isDemo ? ' (demo)' : ''}`;
+  $('verdict').className = cls;
+  $('verdictSub').textContent = top.verdict === 'no'
+    ? 'No device\'s traffic followed the code. If you suspect a camera, try another channel or get closer.'
+    : `${top.mac} (${top.vendor}) followed the code with score ${top.score.toFixed(2)} and p-value ${top.p.toFixed(3)}. ` +
+      (top.verdict === 'camera' ? 'To be sure, run the challenge once more with a new code.' : 'Run the challenge again to check.');
+  $('devTable').innerHTML = devs.slice(0, 12).map((d, i) => `
+    <tr data-i="${i}" class="${i === selected ? 'sel' : ''}">
+      <td>${i + 1}</td>
+      <td class="mono">${d.mac}</td>
+      <td>${d.vendor}${d.camChip ? ' <span class="pill warn">camera chip</span>' : ''}</td>
+      <td><div class="scorebar"><i style="width:${Math.round(d.score * 100)}%"></i></div>${d.score.toFixed(2)}</td>
+      <td class="mono">${d.p.toFixed(3)}</td>
+      <td class="mono">${d.offsetMs} ms</td>
+      <td class="mono">${d.meanRssi != null ? d.meanRssi.toFixed(0) + ' dBm' : '—'}</td>
+      <td><span class="pill ${d.verdict === 'camera' ? 'bad' : d.verdict === 'maybe' ? 'warn' : 'good'}">${d.verdict}</span></td>
+    </tr>`).join('');
+  drawCharts();
+  const ch = result.channels.map((c) => `${c.ch}`).join(', ') || 'unknown';
+  $('capInfo').textContent = `${result.totalFrames} frames, ${result.transmitters} transmitters, channel ${ch}, ` +
+    `${result.mode === 'start time' ? 'aligned to the recorded start time' : 'start time unknown, searched the whole capture'}. ` +
+    `Capture SHA-256: ${result.fileHash}`;
+  $('results').scrollIntoView({ behavior: 'smooth' });
+}
+
+function drawCharts() {
+  if (!result?.devices.length) return;
+  drawTraffic($('traffic'), result, result.devices[selected]);
+  const others = result.devices.filter((_, i) => i !== selected).slice(0, 2);
+  drawRssi($('rssi'), result, [result.devices[selected], ...others]);
+}
+
+$('devTable').addEventListener('click', (e) => {
+  const tr = e.target.closest('tr');
+  if (!tr) return;
+  selected = Number(tr.dataset.i);
+  [...$('devTable').children].forEach((r) => r.classList.toggle('sel', r === tr));
+  drawCharts();
+});
+
+// ---------- 4. report ----------
+
+async function makeReport() {
+  $('reportBtn').disabled = true;
+  try {
+    const { blob, hash, name } = await buildReport({
+      session, result, device: result?.devices[selected], snapshots: getSnapshots(), fileName, demo: isDemo,
+    });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    $('hash').textContent = hash;
+    $('hashBox').hidden = false;
+  } catch (e) {
+    alert('Could not make the report: ' + e.message);
+  } finally {
+    $('reportBtn').disabled = false;
+  }
+}
+
+// ---------- wiring ----------
+
+const drop = $('drop');
+drop.addEventListener('click', () => $('fileIn').click());
+$('fileIn').addEventListener('change', (e) => e.target.files[0] && analyzeFile(e.target.files[0]));
+drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', (e) => {
+  e.preventDefault(); drop.classList.remove('over');
+  if (e.dataTransfer.files[0]) analyzeFile(e.dataTransfer.files[0]);
+});
+$('startBtn').addEventListener('click', runChallenge);
+$('demoBtn').addEventListener('click', runDemo);
+$('reportBtn').addEventListener('click', makeReport);
+window.addEventListener('resize', drawCharts);
+$('snapCount').textContent = getSnapshots().length;
+showSession();
