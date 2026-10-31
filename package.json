@@ -13,7 +13,8 @@
     "e2e": "node tools/e2e.js",
     "deploy": "npm test && vite build && gh-pages -d dist --nojekyll -m 'Deploy app'",
     "android:setup": "sh tools/android-setup.sh",
-    "apk": "sh tools/apk.sh"
+    "apk": "sh tools/apk.sh",
+    "gif": "node tools/gif.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",
@@ -27,7 +28,9 @@
     "@capacitor/cli": "^8.6.0",
     "@vitejs/plugin-basic-ssl": "^2.3.0",
     "gh-pages": "^6.3.0",
+    "gifenc": "^1.0.3",
     "playwright": "^1.64.1",
+    "pngjs": "^7.0.0",
     "vite": "^8.3.5",
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.0.5"
