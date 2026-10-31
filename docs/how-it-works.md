@@ -38,12 +38,27 @@ A camera that streams video over Wi-Fi has to send more data when its picture ch
 
 The laptop screen flickers in a random pattern of "busy" and "still" in front of the object, for about 25 seconds. At the same time, the Mac records the Wi-Fi traffic in the air around it (only the size and time of each packet; the content is encrypted and we do not read it). Then we drop that recording into the page. If one device's traffic rises and falls with our pattern, it is very likely watching the screen.
 
+## How the app adjusts to your phone
+
+Every phone's torch takes a different time to switch on and off, and the camera takes a moment to notice. Before the first scan the app blinks the torch 6 times and times how long the picture takes to change. It then makes each flash of the pattern long enough for this phone. The number shows in Details as "torch timing".
+
+Between scans, the app compares each new picture with the last one to see how far your hand moved, and moves the circles with it, so they stay on the spot.
+
+## The network check (Android app)
+
+A web page is not allowed to look at Wi-Fi networks or other devices, so this check is only in the Android app. It does two things:
+
+- **Nearby Wi-Fi names.** Many cheap cameras make their own Wi-Fi network with a name like "IPC-1234" or "CAM_xxxx", or are made by companies that mostly make camera chips. Those names get listed.
+- **Devices on your Wi-Fi.** The app knocks on every address on the Wi-Fi you joined and checks which ones answer on the doors cameras usually use (for example port 554 for video streams), answer a "are you a camera?" message that many cameras reply to, or show a camera login page.
+
+It cannot see a camera on another Wi-Fi, on mobile data, or one that only records to a memory card. Some hostel and college Wi-Fi networks also hide devices from each other.
+
 ## What the app cannot do
 
 - It cannot promise a room is safe. It only covers what it checked.
 - A lens hidden behind a dark cover, or seen from a very sharp angle, may not reflect enough.
 - Cameras without night-vision lights do not show up in the IR check.
-- Cameras that only record to a memory card, or use mobile data, do not show up in the Wi-Fi check.
+- Cameras that only record to a memory card, or use mobile data, do not show up in the Wi-Fi or network checks.
 - The torch only works from a web page in Chrome on Android. iPhones do not allow it.
 - A spot "worth a closer look" is not proof. It is a reason to look closely and, if needed, tell someone who can act.
 

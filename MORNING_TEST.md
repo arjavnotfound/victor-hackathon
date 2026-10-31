@@ -1,36 +1,44 @@
-# Morning test (1 Nov)
+# Phone test checklist
 
 ## Summary (read this first)
 
-**Finished (checked in desktop Chromium and unit tests only):** home, lens check, IR check, results, PDF report with a printed fingerprint, "If you found something" page, new design with local fonts. 34 unit tests and 9 end-to-end checks pass. The Wi-Fi page and its sample data still work.
+**Finished (checked in desktop Chromium and unit tests only):** home, lens check, IR check, results, PDF report, help page, network check screen, light and dark mode, offline install. 45 unit tests and 12 end-to-end checks pass. The app is live at https://arjavnotfound.github.io/victor-hackathon/ (no Mac, no certificate warning).
+
+**New since the overnight build:**
+- Before the first scan the lens check blinks the torch 6 times to measure how slow this phone's torch is, and sets the bit length from that. Shown in Details as "torch timing".
+- Circles follow small hand movement between scans.
+- Exposure is only locked when the phone reports its current exposure time, so the picture should not go black.
+- Android app (`VICTOR.apk`) with a **Network check**: nearby Wi-Fi names and devices on your Wi-Fi that look like cameras.
 
 **Not checked on a real phone yet. The risky parts:**
-- The real torch blinking from the page. The page now reads the torch state back after every switch and says so plainly if it did not change.
-- Locking exposure, focus and white balance. It is done before every scan; if the phone refuses, the scan still runs unlocked.
-- How many frames per bit the phone really gives (needs at least 4, ideally 8 or more).
-- The IR thresholds were tuned on synthetic and simulated pictures only.
+- The real torch blinking, in Chrome and inside the Android app.
+- The torch timing measurement and the exposure lock.
+- How many frames per bit the phone gives (want 4 or more).
+- IR thresholds (tuned on simulated pictures only).
+- The whole Network check (needs the APK on a phone and real Wi-Fi).
 
-**First three things to test on the phone:**
-1. Lens check → tap **Phone**: does it say Torch: yes? Then Scan once and watch: does the torch blink?
-2. Tap **Details** after a scan: frames per bit (want 4 or more each) and torch misses (want 0).
-3. Lens check on the IP Webcam phone in the tissue box at 1 m: does it say "Seen twice, worth a closer look" after two scans?
+**First four things to test on the phone:**
+1. Open the link above in Chrome. Lens check → **Phone**: does it say Torch: yes? Start camera: does the torch blink 6 times, then Details shows a torch timing?
+2. Scan once. Details: frames per bit (4 or more) and torch misses (0).
+3. Lens check on the IP Webcam phone in the tissue box at 1 m: "Seen twice, worth a closer look" after two scans?
+4. Install the APK, run Network check on the same Wi-Fi as the IP Webcam phone: is it listed?
 
 ---
 
 ## Checklist
 
-### 1. Start the server and open it on the phone
-1. On the Mac, in the repo folder:
-   ```bash
-   cd ~/Downloads/VICTOR && npm run dev
-   ```
-2. Find the Mac's IP address:
-   ```bash
-   ipconfig getifaddr en0
-   ```
-3. On the Android phone (same Wi-Fi), open Chrome and go to `https://<that IP>:5173`
-4. Chrome warns about the certificate. Tap **Advanced → Proceed**. (It is our own local certificate.)
-5. Tap **Start the check**, then **Start camera**, and allow camera access.
+### 1. Open the app on the phone
+**Easiest:** open https://arjavnotfound.github.io/victor-hackathon/ in Chrome on the Android phone (or scan the QR code on the laptop home page). Chrome's menu → **Add to Home screen** makes it work offline at the venue.
+
+**Android app (for the Network check):** download `VICTOR.apk` from https://github.com/arjavnotfound/victor-hackathon/releases/latest on the phone, open it, allow "install unknown apps" for Chrome when asked.
+
+**Local server (only if the internet is down):**
+```bash
+cd ~/Downloads/VICTOR && npm run dev
+```
+Then on the phone open `https://<Mac IP>:5173` (IP from `ipconfig getifaddr en0`) and tap **Advanced → Proceed** on the certificate warning.
+
+Tap **Start the check**, then **Start camera**, and allow camera access.
 
 ### 2. What this phone supports
 On the lens check, tap **Phone**. Write down:
@@ -69,6 +77,12 @@ Only useful if one of the cameras has night-vision lights (IP Webcam on a phone 
 3. Tap **Use front camera** and try again. Note which camera sees it better.
 4. Also note: does a phone screen, a lamp or a street light through a window get a circle? (It should not.)
 
+### 4b. Network check (Android app only)
+1. Phone on the same Wi-Fi as the IP Webcam phone. Location turned on (Android hides Wi-Fi names without it).
+2. Home → **Network check** → **Check the network**. Allow location when asked. Takes about 15 seconds.
+3. Note: is the IP Webcam phone listed? What does it say about it? Is anything else listed that is not a camera?
+4. Try on the college or hostel Wi-Fi too: many of those hide devices from each other, so expect fewer devices.
+
 ### 5. Save a report
 1. Tap **Next: results**. Check the "What was checked" list and the saved spot photos.
 2. Tap **Save report (PDF)**. Open the PDF from the download bar.
@@ -78,9 +92,9 @@ Only useful if one of the cameras has night-vision lights (IP Webcam on a phone 
 1. IP Webcam phone streams to a second phone (open its address in the second phone's browser and leave it playing).
 2. Find the channel the IP Webcam phone uses (the router page, or the busy channels list from an earlier capture).
 3. Mac: ⌘ Space → Wireless Diagnostics → Window → Sniffer → pick that channel, 20 MHz → **Start**.
-4. On the Mac, open `https://localhost:5173/challenge.html`, press **Start**, point the screen at the IP Webcam phone's lens for the whole 25 seconds.
+4. On the Mac, open https://arjavnotfound.github.io/victor-hackathon/challenge.html (or `https://localhost:5173/challenge.html` with `npm run dev`), press **Start**, point the screen at the IP Webcam phone's lens for the whole 25 seconds.
 5. Sniffer → **Stop**. Drop the new file from `/var/tmp/` (Downloads → Sniffer captures) onto the page.
-6. Expected: "Camera found" with the IP Webcam phone's address at the top.
+6. Expected: "A device followed the flashes" with the IP Webcam phone's address at the top.
 
 ### 7. If the lens check finds too much or too little
 Open **Details** on the lens check. Changes are remembered on the phone. **Reset to defaults** undoes them.
@@ -92,11 +106,12 @@ Open **Details** on the lens check. Changes are remembered on the phone. **Reset
 | Lens not found up close (0.5 m) | Biggest dot up to 80-120 (the dot looks bigger up close). |
 | Frames per bit under 4 | Bit length up to 450-500 ms. |
 | Heatmap is grey and noisy, lens not white | Settle time up to 180-220 ms (the torch is slow to switch on this phone). |
+| Torch timing above 250 ms | Fine; the app already slowed the pattern down. Tap **Measure torch timing again** if you changed phones. |
 | Torch misses above 0 | Note it. If the torch visibly blinks anyway, the read-back is just slow; it is fine. |
 
 IR check **Details**: too many circles → Brightness needed up to 240, Brighter than around it up to 80. Nothing found → Brightness needed down to 200, Brighter than around it down to 40.
 
 ### 8. Fallbacks on stage
-- Lens check without a real camera: open `https://<IP>:5173/lens.html?demo=1` (a simulated room; Start camera, then Scan twice). The IR check also has `ir.html?demo=1`. The report says DEMO when the simulated camera was used.
+- Lens check without a real camera: open https://arjavnotfound.github.io/victor-hackathon/lens.html?demo=1 (a simulated room; Start camera, then Scan twice). The IR check also has `ir.html?demo=1`. The report says DEMO when the simulated camera was used.
 - Wi-Fi page: **Try with sample data** gives a simulated capture with one camera and four other devices.
-- If the phone cannot reach the Mac, the laptop can run the demo pages too: `npm run dev`, then open `https://localhost:5173/?demo=1`.
+- If the phone has no camera access, the laptop can run the demo pages too: open the same link with `?demo=1` on the end.
