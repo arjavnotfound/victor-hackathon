@@ -70,17 +70,17 @@ export async function lockForTorch(cam) {
     await sleep(700); // auto exposure needs a moment to settle under the torch
     const st = cam.track.getSettings();
     const adv = {};
-    if (caps.exposureMode?.includes('manual')) {
-      adv.exposureMode = 'manual'; locked.push('exposure');
-      if (st.exposureTime) adv.exposureTime = st.exposureTime;
+    // Only lock when we can keep the current value. Chrome on Android puts a
+    // "manual" exposure with no time at the middle of the range, which can
+    // turn the picture black or white.
+    if (caps.exposureMode?.includes('manual') && st.exposureTime) {
+      Object.assign(adv, { exposureMode: 'manual', exposureTime: st.exposureTime }); locked.push('exposure');
     }
-    if (caps.focusMode?.includes('manual')) {
-      adv.focusMode = 'manual'; locked.push('focus');
-      if (st.focusDistance) adv.focusDistance = st.focusDistance;
+    if (caps.focusMode?.includes('manual') && st.focusDistance) {
+      Object.assign(adv, { focusMode: 'manual', focusDistance: st.focusDistance }); locked.push('focus');
     }
-    if (caps.whiteBalanceMode?.includes('manual')) {
-      adv.whiteBalanceMode = 'manual'; locked.push('white balance');
-      if (st.colorTemperature) adv.colorTemperature = st.colorTemperature;
+    if (caps.whiteBalanceMode?.includes('manual') && st.colorTemperature) {
+      Object.assign(adv, { whiteBalanceMode: 'manual', colorTemperature: st.colorTemperature }); locked.push('white balance');
     }
     if (locked.length) await cam.track.applyConstraints({ advanced: [adv] });
   } catch (e) {

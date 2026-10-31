@@ -93,3 +93,69 @@ describe('lens finder', () => {
     expect(second.filter((b) => b.confirmed)).toHaveLength(1);
   });
 });
+
+import { estimateTorchLag, timingFromCalibration, estimateShift } from '../src/lens.js';
+
+describe('torch calibration', () => {
+  // Simulated phone: 30 fps, torch shows up 150 ms after the command and
+  // takes 60 ms to reach full brightness.
+  function record(lag = 150, ramp = 60) {
+    const switches = [], samples = [];
+    for (let i = 0; i < 6; i++) switches.push({ t: 300 + i * 700, on: i % 2 === 0 });
+    const level = (t) => {
+      let v = 40;
+      for (const s of switches) {
+        const f = Math.min(1, Math.max(0, (t - s.t - lag) / ramp));
+        if (f > 0) v = s.on ? 40 + 30 * f : 70 - 30 * f;
+      }
+      return v;
+    };
+    for (let t = 0; t < 300 + 6 * 700; t += 33) samples.push({ t, v: level(t) + Math.sin(t) * 0.5 });
+    return { samples, switches };
+  }
+
+  it('measures how slow the torch is', () => {
+    const { samples, switches } = record(150, 60);
+    const cal = estimateTorchLag(samples, switches);
+    expect(cal.n).toBe(6);
+    expect(cal.lagMs).toBeGreaterThan(150);
+    expect(cal.lagMs).toBeLessThan(230);
+    expect(cal.riseMs).toBeGreaterThanOrEqual(cal.lagMs);
+    expect(cal.riseMs).toBeLessThan(270);
+  });
+
+  it('returns null when the torch never changes the picture', () => {
+    const { samples, switches } = record();
+    expect(estimateTorchLag(samples.map((s) => ({ t: s.t, v: 50 })), switches)).toBeNull();
+  });
+
+  it('turns a slow torch into longer settle and bit times', () => {
+    const fast = timingFromCalibration({ riseMs: 70 }, 30);
+    const slow = timingFromCalibration({ riseMs: 260 }, 30);
+    expect(slow.settleMs).toBeGreaterThan(fast.settleMs);
+    expect(slow.bitMs).toBeGreaterThan(fast.bitMs);
+    // at least 6 frames left to average in each bit
+    expect((slow.bitMs - slow.settleMs) / (1000 / 30)).toBeGreaterThanOrEqual(6);
+  });
+});
+
+describe('hand movement', () => {
+  it('finds how far the picture moved', () => {
+    const rand = seeded(21), W = 320, H = 180;
+    // Smooth random texture, like a real room at low resolution.
+    const base = new Float32Array((W + 60) * (H + 60));
+    for (let p = 0; p < base.length; p++) base[p] = rand() * 255;
+    const tex = localContrast(base, W + 60, H + 60, 3).map((v, i) => base[i] - v); // box blur
+    const crop = (ox, oy) => {
+      const g = new Float32Array(W * H);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) g[y * W + x] = tex[(y + oy) * (W + 60) + x + ox];
+      return g;
+    };
+    // Camera moves right/down by (7, 4), so content moves left/up.
+    const a = crop(20, 20), b = crop(27, 24);
+    const moved = estimateShift(a, b, W, H);
+    expect(moved).toMatchObject({ dx: -7, dy: -4 });
+    expect(moved.gain).toBeGreaterThan(0.5);
+    expect(estimateShift(a, a, W, H)).toMatchObject({ dx: 0, dy: 0 });
+  });
+});

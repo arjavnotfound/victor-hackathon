@@ -10,12 +10,13 @@
 import { makeCode, codeToString } from './code.js';
 import {
   toGray, localContrast, correlateCode, findBlobs, updateTracks, blinkImage, LENS_DEFAULTS, spotLabel,
+  estimateTorchLag, timingFromCalibration, estimateShift,
 } from './lens.js';
 import { addSnapshot, getSnapshots, markCheck, savePhone, getChecks } from './store.js';
 import { openCamera, setTorch, lockForTorch, phoneInfo } from './camera.js';
 import { $, isDemo, initPage } from './ui.js';
 import {
-  makeGrabber, attachStream, screenMapper, drawSpots, sizeOverlay, snapshot, buildSliders, showSupport, wireSheets,
+  makeGrabber, attachStream, screenMapper, drawSpots, sizeOverlay, snapshot, buildSliders, showSupport, wireSheets, applySettings,
 } from './cam-page.js';
 
 initPage('Lens check');
@@ -26,12 +27,12 @@ const settings = buildSliders($('sliders'), 'lens', LENS_DEFAULTS, [
   ['rMin', 'Match needed (correlation)', 0.5, 0.99, 0.01],
   ['ampMin', 'Smallest blink (grey levels)', 1, 60, 1],
   ['maxArea', 'Biggest dot (pixels)', 2, 200, 1],
-  ['bitMs', 'Bit length (ms)', 200, 700, 10],
-  ['settleMs', 'Settle time (ms)', 40, 300, 10],
+  ['bitMs', 'Bit length (ms)', 200, 900, 10],
+  ['settleMs', 'Settle time (ms)', 40, 400, 10],
   ['bits', 'Code length (bits)', 6, 16, 1],
 ]);
 
-let cam = null, grab = null, busy = false, torchOk = false;
+let cam = null, grab = null, busy = false, torchOk = false, calTried = false;
 let spots = [], tracks = [], scans = getChecks().lens?.scans || 0, lastCode = null;
 
 const style = (s) => ({ color: s.confirmed ? '#7fe0c6' : '#ffc27a', text: s.confirmed ? 'Seen twice' : 'Possible reflection' });
@@ -51,6 +52,7 @@ async function start() {
   showSupport($('supportTable'), cam);
   savePhone(await phoneInfo(cam));
   redraw();
+  followHand();
   $('scanBtn').textContent = 'Scan';
   if (torchOk) setStatus('Point the phone at the area. Hold steady. Then move a little to the side and scan again.');
   else setStatus('This phone or browser does not let the page use the torch, so the lens check cannot run here. The IR check still works.', true);
@@ -66,6 +68,7 @@ async function scan() {
   setStatus('Getting the camera ready…');
   const locked = await lockForTorch(cam);
   showSupport($('supportTable'), cam, locked);
+  if (!settings.calibrated && !calTried) await calibrate();
 
   const code = makeCode(settings.bits);
   lastCode = code;
@@ -112,8 +115,11 @@ async function scan() {
   // Every bit needs a few frames, or the average for that bit is meaningless.
   if (Math.min(...counts) < 2) {
     setStatus('The camera sent too few pictures. Keep this page open, hold steady and scan again.', true);
+    applySettings('lens', settings, { bitMs: Math.min(900, bitMs + 150) });
     return;
   }
+  // Fewer than 4 frames in a bit makes the average noisy: use longer bits next time.
+  if (Math.min(...counts) < 4) applySettings('lens', settings, { bitMs: Math.min(900, bitMs + 100) });
 
   // Average each bit, then keep only small-scale detail (local contrast).
   sums.forEach((s, i) => { for (let p = 0; p < n; p++) s[p] /= counts[i]; });
@@ -132,7 +138,9 @@ async function scan() {
   $('debugInfo').innerHTML =
     `code ${codeToString(code)}<br>frames per bit ${counts.join(',')} · ${fps.toFixed(0)} fps<br>` +
     `best match ${maxR.toFixed(2)} · dots ${blobs.length} · scans ${scans}<br>` +
-    `top score ${blobs[0]?.score ?? '-'} · torch misses ${torchMisses} · analysis ${W}x${H}`;
+    `top score ${blobs[0]?.score ?? '-'} · torch misses ${torchMisses} · analysis ${W}x${H}<br>` +
+    `torch timing: ${settings.calLag ? `${settings.calLag} ms to switch` : 'not measured'}`;
+  if (spots.length) navigator.vibrate?.(spots.some((s) => s.confirmed) ? [30, 60, 30] : 30);
 
   $('saveBtn').disabled = !spots.length;
   $('scanBtn').textContent = 'Scan again';
@@ -144,6 +152,67 @@ async function scan() {
     setStatus('Nothing blinked back here. Point at the next area and scan, or try from 1 to 2 metres away.');
   }
   redraw();
+}
+
+/**
+ * Measure this phone's torch timing once (see estimateTorchLag in lens.js):
+ * blink the torch slowly, watch the middle of the picture get brighter and
+ * darker, and set the settle time and bit length from what we saw.
+ */
+async function calibrate() {
+  calTried = true;
+  setStatus('Measuring how fast this torch reacts. Hold steady…');
+  const { W, H } = grab;
+  const gray = new Float32Array(W * H);
+  const samples = [], switches = [];
+  const t0 = performance.now() + 200;
+  for (let i = 0; i < 6; i++) {
+    const t = t0 + i * 650;
+    while (performance.now() < t) { await nextFrame(); sample(); }
+    switches.push({ t: performance.now(), on: i % 2 === 0 });
+    setTorch(cam, i % 2 === 0);
+  }
+  const end = performance.now() + 650;
+  while (performance.now() < end) { await nextFrame(); sample(); }
+  await setTorch(cam, false);
+
+  function sample() {
+    // Mean brightness of the middle half of the picture, where the user points.
+    toGray(grab.rgba(), gray);
+    let sum = 0, n = 0;
+    for (let y = H >> 2; y < (H * 3) >> 2; y++) for (let x = W >> 2; x < (W * 3) >> 2; x++) { sum += gray[y * W + x]; n++; }
+    samples.push({ t: performance.now(), v: sum / n });
+  }
+  const span = (samples.at(-1).t - samples[0].t) / 1000;
+  const fps = samples.length / span;
+  const cal = estimateTorchLag(samples, switches);
+  if (!cal) return; // the torch did not visibly light the scene; keep the defaults
+  applySettings('lens', settings, { ...timingFromCalibration(cal, fps), calibrated: true, calLag: Math.round(cal.riseMs) });
+}
+
+/**
+ * Between scans, keep the circles on their spots while the hand moves:
+ * estimate how far the picture shifted since the last frame and move the
+ * spots (and the remembered tracks) by the same amount. This also makes
+ * "seen twice" matching fairer after the user steps to the side.
+ */
+async function followHand() {
+  const { W, H } = grab;
+  let prev = new Float32Array(W * H), cur = new Float32Array(W * H), have = false, k = 0;
+  for (;;) {
+    await nextFrame();
+    if (busy || (!spots.length && !tracks.length) || ++k % 2) { have = false; continue; }
+    toGray(grab.rgba(), cur);
+    if (have) {
+      const { dx, dy, gain } = estimateShift(prev, cur, W, H);
+      if ((dx || dy) && gain > 0.15) {
+        for (const s of [...spots, ...tracks]) { s.x += dx; s.y += dy; }
+        redraw();
+      }
+    }
+    [prev, cur] = [cur, prev];
+    have = true;
+  }
 }
 
 // ---------- drawing ----------
@@ -208,6 +277,11 @@ $('saveBtn').addEventListener('click', () => {
 
 wireSheets();
 $('clearBtn').addEventListener('click', () => { tracks = []; spots = []; redraw(); $('saveBtn').disabled = true; });
+$('recalBtn').addEventListener('click', () => {
+  applySettings('lens', settings, { calibrated: false });
+  calTried = false;
+  setStatus('The torch timing will be measured again on the next scan.');
+});
 window.addEventListener('resize', redraw);
 showSaved();
 if (isDemo) setStatus('Demo camera: a simulated room. Tap Start camera, then Scan twice.');

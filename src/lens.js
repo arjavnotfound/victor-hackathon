@@ -198,7 +198,99 @@ export const LENS_DEFAULTS = {
   ampMin: 6,       // smallest blink that counts, in grey levels
   maxArea: 40,     // biggest dot, in analysis pixels; bigger is a mirror or glossy surface
   trackDist: 0.12, // how far a spot may move between scans, as a share of picture width
+  calibrated: false, // set once the torch timing has been measured on this phone
 };
 
 /** Plain words for a spot. Never claims it is a camera. */
 export const spotLabel = (b) => (b.confirmed ? 'Seen twice, worth a closer look' : 'Possible reflection');
+
+const median = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[s.length >> 1] : NaN; };
+
+/**
+ * Torch timing calibration. Phones differ a lot in how long the torch takes
+ * to switch and how long the camera takes to show it (often 50 to 300 ms).
+ * If we start averaging frames too early in each bit, we mix "on" and "off"
+ * pictures and the lens blink gets weaker.
+ *
+ * `samples` = [{ t, v }]: time (ms) and mean brightness of each frame.
+ * `switches` = [{ t, on }]: when we asked the torch to change.
+ * For each switch we find when the brightness got half way (t50) and 90% of
+ * the way (t90) from the old level to the new one.
+ * Returns { lagMs, riseMs, step, n } (medians over usable switches), or null
+ * if the torch never visibly changed the picture.
+ */
+export function estimateTorchLag(samples, switches, { minStep = 2 } = {}) {
+  const lag50 = [], lag90 = [], steps = [];
+  switches.forEach((sw, i) => {
+    const end = switches[i + 1]?.t ?? sw.t + 900;
+    const before = samples.filter((s) => s.t >= sw.t - 200 && s.t < sw.t);
+    const win = samples.filter((s) => s.t >= sw.t && s.t < end);
+    const tail = win.slice(Math.floor(win.length * 0.6));
+    if (!before.length || tail.length < 2) return;
+    const v0 = before.reduce((a, s) => a + s.v, 0) / before.length;
+    const v1 = tail.reduce((a, s) => a + s.v, 0) / tail.length;
+    const step = v1 - v0;
+    if (Math.abs(step) < minStep) return;
+    const at = (frac) => win.find((s) => (s.v - v0) / step >= frac)?.t;
+    const t50 = at(0.5), t90 = at(0.9);
+    if (t50 == null || t90 == null) return;
+    lag50.push(t50 - sw.t); lag90.push(t90 - sw.t); steps.push(Math.abs(step));
+  });
+  if (!lag50.length) return null;
+  return { lagMs: median(lag50), riseMs: median(lag90), step: median(steps), n: lag50.length };
+}
+
+/**
+ * Bit timing from a calibration and the frame rate: skip frames until the
+ * torch has fully changed (plus one frame of margin), then keep at least
+ * `framesPerBit` frames to average.
+ */
+export function timingFromCalibration(cal, fps, { framesPerBit = 6 } = {}) {
+  const frame = 1000 / Math.max(5, fps);
+  const settleMs = Math.round(Math.min(400, Math.max(60, cal.riseMs + frame)) / 10) * 10;
+  const bitMs = Math.round(Math.min(900, Math.max(300, settleMs + framesPerBit * frame)) / 10) * 10;
+  return { settleMs, bitMs };
+}
+
+/**
+ * How far the whole picture moved between two grey frames (the phone in a
+ * hand drifts). Block matching: try every shift, keep the one where the two
+ * pictures differ least. First on a 4x smaller picture for speed, then
+ * refined at full size. Returns { dx, dy, gain } in pixels: content at (x, y)
+ * in `a` is at (x + dx, y + dy) in `b`. `gain` (0..1) is how much better the
+ * best shift fits than no shift at all; near 0 means "can't tell" (a dark or
+ * blank wall), and the caller should not move anything.
+ */
+export function estimateShift(a, b, w, h, maxShift = 24) {
+  const k = 4, sw = Math.floor(w / k), sh = Math.floor(h / k);
+  const shrink = (g) => {
+    const o = new Float32Array(sw * sh);
+    for (let y = 0; y < sh * k; y++) for (let x = 0; x < sw * k; x++) o[((y / k) | 0) * sw + ((x / k) | 0)] += g[y * w + x];
+    return o;
+  };
+  const sa = shrink(a), sb = shrink(b);
+  // Mean absolute difference over the overlap, sampled every `step` pixels.
+  const cost = (A, B, W, H, dx, dy, step) => {
+    let sum = 0, n = 0;
+    for (let y = Math.max(0, -dy); y < Math.min(H, H - dy); y += step) {
+      for (let x = Math.max(0, -dx); x < Math.min(W, W - dx); x += step) {
+        sum += Math.abs(A[y * W + x] - B[(y + dy) * W + x + dx]); n++;
+      }
+    }
+    return n > W * H / (step * step) / 4 ? sum / n : Infinity; // ignore shifts with too little overlap
+  };
+  const r = Math.ceil(maxShift / k);
+  let best = { dx: 0, dy: 0, c: Infinity };
+  for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+    const c = cost(sa, sb, sw, sh, dx, dy, 1);
+    if (c < best.c) best = { dx, dy, c };
+  }
+  let fine = { dx: best.dx * k, dy: best.dy * k, c: Infinity };
+  const cx = fine.dx, cy = fine.dy;
+  for (let dy = cy - k; dy <= cy + k; dy++) for (let dx = cx - k; dx <= cx + k; dx++) {
+    const c = cost(a, b, w, h, dx, dy, 2);
+    if (c < fine.c) fine = { dx, dy, c };
+  }
+  const still = cost(a, b, w, h, 0, 0, 2);
+  return { dx: fine.dx, dy: fine.dy, gain: still > 0 ? 1 - fine.c / still : 0 };
+}

@@ -64,6 +64,8 @@ await step('lens check (demo) finds the simulated lens, seen twice, and saves it
   await shot('lens-found');
   await page.click('#detailsBtn');
   assert.match(await text('#debugInfo'), /frames per bit/);
+  assert.match(await text('#debugInfo'), /torch timing: \d+ ms to switch/); // calibration ran
+  console.log('      ' + (await text('#debugInfo')).replace(/\n/g, ' | '));
   await shot('lens-details');
   await page.click('#supportBtn');
   assert.match(await text('#supportTable'), /Torch/);

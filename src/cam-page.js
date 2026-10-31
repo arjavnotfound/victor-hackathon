@@ -112,6 +112,16 @@ export function buildSliders(container, name, defaults, spec) {
   return settings;
 }
 
+/** Change settings from code (calibration) and keep the sliders in step. */
+export function applySettings(name, settings, values) {
+  Object.assign(settings, values);
+  saveSettings(name, settings);
+  for (const [k, v] of Object.entries(values)) {
+    const el = $('s_' + k);
+    if (el) { el.value = v; $('v_' + k).textContent = v; }
+  }
+}
+
 /** Fill the "What this phone supports" table. */
 export function showSupport(table, cam, locked) {
   const rows = describeSupport(cam.caps, cam.track.getSettings?.() || {});
