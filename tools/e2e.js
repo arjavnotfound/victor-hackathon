@@ -5,7 +5,7 @@
 
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, copyFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
 process.env.NO_SSL = '1';
@@ -107,6 +107,7 @@ await step('results show the saved spot, and the PDF is real and carries the fin
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#reportBtn')]);
   const path = await dl.path();
   const pdf = readFileSync(path);
+  if (process.env.PDF_OUT) copyFileSync(path, process.env.PDF_OUT);
   assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
   const shown = (await text('#reportNote')).match(/[0-9a-f]{64}/)[0];
   assert.ok(pdf.toString('latin1').includes(shown), 'content fingerprint printed in the PDF');

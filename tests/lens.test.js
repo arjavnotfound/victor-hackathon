@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { makeCode, seeded } from '../src/code.js';
-import { localContrast, correlateCode, findBlobs, updateTracks, blinkImage } from '../src/lens.js';
+import { localContrast, correlateCode, findBlobs, updateTracks, blinkImage, spotLabel } from '../src/lens.js';
 
 // Build N synthetic grey frames: noisy room, a 2x2 lens that follows the code,
 // a big 30x20 glossy patch that also follows the code, and an LED with its own pattern.
@@ -63,5 +63,33 @@ describe('lens finder', () => {
       expect(ones).toBeGreaterThanOrEqual(4);
       expect(ones).toBeLessThanOrEqual(8);
     }
+  });
+
+  it('a glint seen once stays a possible reflection', () => {
+    const tracks = [];
+    updateTracks(tracks, [{ x: 50, y: 50, score: 90 }], 38);
+    // Second scan after moving: the glint is gone, a different dot appears far away.
+    const second = [{ x: 200, y: 120, score: 85 }];
+    updateTracks(tracks, second, 38);
+    expect(second[0].confirmed).toBe(false);
+    expect(spotLabel(second[0])).toBe('Possible reflection');
+    expect(tracks).toHaveLength(2);
+  });
+
+  it('a spot found again nearby is seen twice, and says so in plain words', () => {
+    const tracks = [];
+    updateTracks(tracks, [{ x: 50, y: 50, score: 90 }], 38);
+    const second = [{ x: 60, y: 56, score: 88 }];
+    updateTracks(tracks, second, 38);
+    expect(second[0].confirmed).toBe(true);
+    expect(spotLabel(second[0])).toBe('Seen twice, worth a closer look');
+  });
+
+  it('two spots in one scan cannot both claim the same earlier spot', () => {
+    const tracks = [];
+    updateTracks(tracks, [{ x: 50, y: 50, score: 90 }], 38);
+    const second = [{ x: 52, y: 50, score: 90 }, { x: 55, y: 52, score: 80 }];
+    updateTracks(tracks, second, 38);
+    expect(second.filter((b) => b.confirmed)).toHaveLength(1);
   });
 });

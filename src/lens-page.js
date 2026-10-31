@@ -75,16 +75,18 @@ async function scan() {
   const sums = code.map(() => new Float32Array(n));
   const counts = code.map(() => 0);
   const gray = new Float32Array(n);
-  let torchFailed = false, frames = 0;
+  let torchMisses = 0, frames = 0;
+  // One slow read-back should not end the scan; most of the code failing should.
+  const tooManyMisses = () => torchMisses > code.length / 2;
   setStatus('Scanning. Hold steady…');
 
   const t0 = performance.now() + 60;
-  for (let i = 0; i < code.length && !torchFailed; i++) {
+  for (let i = 0; i < code.length && !tooManyMisses(); i++) {
     const start = t0 + i * bitMs;
     while (performance.now() < start) await nextFrame();
     // Not awaited: the settle window below covers the delay. The result is
     // checked so a torch that never switches on is reported, not hidden.
-    setTorch(cam, code[i]).then((ok) => { if (!ok) torchFailed = true; });
+    setTorch(cam, code[i]).then((ok) => { if (!ok) torchMisses++; });
     drawBits(code, i);
     // Skip the first `settleMs`: the torch and the camera sensor need a moment
     // to change. Frames from that moment are a mix of on and off.
@@ -103,7 +105,8 @@ async function scan() {
   busy = false;
   $('scanBtn').disabled = false;
 
-  if (torchFailed) {
+  $('debugInfo').dataset.torchMisses = torchMisses;
+  if (tooManyMisses()) {
     setStatus('The torch did not switch on. This phone or browser may not allow it. The IR check still works.', true);
     return;
   }

@@ -37,7 +37,9 @@ $('reportBtn').addEventListener('click', async () => {
   $('reportBtn').disabled = true;
   try {
     const { blob, hash, contentHash, name } = await buildReport({
-      snapshots: getSnapshots(), checks: getChecks(), wifi: getWifiResult(), phone: getPhone(), demo: isDemo,
+      snapshots: getSnapshots(), checks: getChecks(), wifi: getWifiResult(), phone: getPhone(),
+      // Say DEMO whenever the simulated camera or sample Wi-Fi data was used.
+      demo: isDemo || /simulated/.test(getPhone()?.camera || '') || !!getWifiResult()?.demo,
     });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);

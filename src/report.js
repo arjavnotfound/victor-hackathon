@@ -129,6 +129,7 @@ export async function buildReport({
   line('Limits: a high score is strong evidence, not proof in law. Cameras that only record to a memory card, or use mobile data, do not show up in the Wi-Fi test.', 9);
   gap();
   gap();
+  if (y > 255) { doc.addPage(); y = 18; } // keep the heading with its fingerprint
   line('6. Fingerprint', 13, true);
   line(`Content fingerprint (SHA-256): ${contentHash}`, 9, true);
   line('This code is worked out from everything in this report, photos included, so if anyone changes the contents later the code will no longer match.', 9);
