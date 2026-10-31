@@ -28,7 +28,11 @@ export function checkLines(checks = {}, wifi = null) {
     : 'No';
   const ir = checks.ir ? `Yes, ${checks.ir.camera || 'back'} camera (${when(checks.ir.at)})` : 'No';
   const wf = wifi ? `Yes (${when(wifi.at)}). ${WIFI_PLAIN[wifi.verdict] || ''}`.trim() : 'Not saved on this device';
-  return [['Lens check', lens], ['IR check', ir], ['Wi-Fi check', wf]];
+  const nw = checks.network;
+  const net = nw
+    ? `Yes, ${nw.nearby} nearby networks and ${nw.devices} devices (${when(nw.at)})${nw.flagged?.length ? `, ${nw.flagged.length} worth a closer look` : ''}`
+    : 'No';
+  return [['Lens check', lens], ['IR check', ir], ['Network check', net], ['Wi-Fi check', wf]];
 }
 
 /**
@@ -40,6 +44,7 @@ export function reportContent({ made, demo = false, checks = {}, wifi = null, sn
     made,
     demo: !!demo,
     checks: checkLines(checks, wifi),
+    network: checks.network?.flagged || [],
     spots: snapshots.map((s) => ({
       time: s.time, kind: s.mode, label: s.label || s.note || '', code: s.code || '', image: s.image || '',
     })),

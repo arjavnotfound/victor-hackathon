@@ -9,8 +9,8 @@ import { APP_NAME } from './config.js';
 import { reportContent, fingerprint, NOTHING_FOUND, LIMITS } from './report-content.js';
 
 const VERDICT_TEXT = {
-  camera: 'Camera very likely: its traffic followed the secret code.',
-  maybe: 'Possible camera: partly followed the code. Run the challenge again.',
+  camera: "A device's traffic followed the secret code. Worth a closer look.",
+  maybe: 'A device partly followed the code. Run the check again.',
   no: 'No device followed the code.',
 };
 
@@ -67,6 +67,7 @@ export async function buildReport({
     doc.addImage(s.image, 'JPEG', M, y, iw, ih);
     y += ih + 4;
   }
+  for (const f of content.network) line(`Network check  ·  ${f.label}: ${f.detail}`, 9);
   line(LIMITS, 9, false, 60);
   gap();
 
@@ -107,7 +108,7 @@ export async function buildReport({
       line(`${x.mac}  ${x.vendor.padEnd(14)}  score ${x.score.toFixed(2)}  p ${x.p.toFixed(3)}  ${x.verdict}`, 9);
     }
   } else {
-    line(wifi ? content.checks[2][1] : 'Not run on this device.', 10);
+    line(wifi ? content.checks[3][1] : 'Not run on this device.', 10);
   }
   gap();
 
@@ -124,6 +125,7 @@ export async function buildReport({
 
   line('5. How the checks work', 13, true);
   line('Lens: the phone torch blinked a random code. A camera lens reflects light straight back to its source, so it blinks back in the same code. Only small dots that matched the code were marked. A spot seen again after the phone moved is less likely to be a passing reflection.', 9);
+  line('Network: the app listed Wi-Fi networks nearby and devices on the joined Wi-Fi, and looked for camera-style names, camera chip makers, video streaming ports and replies to the standard camera discovery message.', 9);
   line('IR: with the lights and the torch off, the phone camera looked for small bright points that stayed on or blinked steadily, like the night-vision lights some cameras have.', 9);
   line('Wi-Fi: the screen flickered in a random code in front of the object. A streaming camera must send more data when its picture changes, so its traffic rises and falls with the code. Each device was scored by correlation, and compared with 200 random codes to get the p-value.', 9);
   line('Limits: a high score is strong evidence, not proof in law. Cameras that only record to a memory card, or use mobile data, do not show up in the Wi-Fi test.', 9);

@@ -2,7 +2,7 @@
 
 import { makeCode, codeToString } from './code.js';
 import { getChallenge, saveChallenge, getSnapshots, saveWifiResult, getWifiResult, getChecks, getPhone } from './store.js';
-import { drawTraffic, drawRssi } from './charts.js';
+import { drawTraffic, drawRssi, screenTheme } from './charts.js';
 import { buildReport } from './report.js';
 
 const $ = (id) => document.getElementById(id);
@@ -149,9 +149,9 @@ function showSummary(sum, message) {
 }
 
 const VERDICT = {
-  camera: ['Camera found', 'verdict camera'],
-  maybe: ['Possible camera', 'verdict maybe'],
-  no: ['No camera reacted', 'verdict no'],
+  camera: ['A device followed the flashes', 'verdict camera'],
+  maybe: ['A device partly followed the flashes', 'verdict maybe'],
+  no: ['No device followed the flashes', 'verdict no'],
 };
 
 function showResult() {
@@ -171,7 +171,7 @@ function showResult() {
   $('verdictSub').textContent = top.verdict === 'no'
     ? 'No device\'s traffic followed the code. If you suspect a camera, try another channel or get closer.'
     : `${top.mac} · ${top.vendor} · score ${top.score.toFixed(2)}. ` +
-      (top.verdict === 'camera' ? 'Run it once more to be sure.' : 'Run it again to check.');
+      (top.verdict === 'camera' ? 'Worth a closer look. Run it once more to be sure.' : 'Run it again to check.');
   $('devTable').innerHTML = devs.slice(0, 12).map((d, i) => `
     <tr data-i="${i}" class="${i === selected ? 'sel' : ''}">
       <td class="mono">${d.mac}</td>
@@ -191,9 +191,9 @@ function showResult() {
 
 function drawCharts() {
   if (!result?.devices.length) return;
-  drawTraffic($('traffic'), result, result.devices[selected]);
+  drawTraffic($('traffic'), result, result.devices[selected], screenTheme());
   const others = result.devices.filter((_, i) => i !== selected).slice(0, 2);
-  drawRssi($('rssi'), result, [result.devices[selected], ...others]);
+  drawRssi($('rssi'), result, [result.devices[selected], ...others], screenTheme());
 }
 
 $('devTable').addEventListener('click', (e) => {

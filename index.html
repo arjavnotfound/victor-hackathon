@@ -3,23 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f6f3ee" />
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="icon.svg" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <title>VICTOR</title>
   <link rel="stylesheet" href="src/app.css" />
   <style>
-    .hero { padding: 40px 0 36px; }
-    .hero .name { font-size: 14px; letter-spacing: .14em; font-weight: 600; color: var(--accent); margin-bottom: 18px; }
-    .hero h1 { font-size: 34px; }
-    .steps { margin: 0 0 32px; padding: 0; list-style: none; counter-reset: s; }
-    .steps li { counter-increment: s; display: flex; gap: 14px; padding: 10px 0; }
-    .steps li::before {
-      content: counter(s); flex: none; width: 28px; height: 28px; border-radius: 50%;
-      background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 14px;
-      display: grid; place-items: center; margin-top: 1px;
+    .hero { padding: 48px 4px 28px; }
+    .hero .name { font-size: 13px; letter-spacing: .12em; font-weight: 600; color: var(--accent); margin-bottom: 14px; }
+    .step { display: flex; gap: 14px; align-items: flex-start; }
+    .step .n {
+      flex: none; width: 28px; height: 28px; border-radius: 50%; margin-top: 1px;
+      background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 15px;
+      display: grid; place-items: center;
     }
-    .more { margin-top: 40px; }
+    .start { margin-top: 20px; }
+    .qr { display: none; }
+    /* On a laptop, offer a QR code so judges can open the app on their phone. */
+    @media (min-width: 900px) and (hover: hover) {
+      .qr { display: flex; gap: 16px; align-items: center; margin-top: 28px; }
+      .qr canvas { width: 120px; height: 120px; border-radius: 10px; background: #fff; padding: 8px; flex: none; }
+    }
   </style>
 </head>
 <body>
@@ -29,27 +34,39 @@
       <h1 id="tagline">A 60-second privacy check before you settle into a room.</h1>
     </section>
 
-    <ol class="steps">
-      <li><span><b>Lens check.</b> <span class="muted">The torch blinks a secret pattern. A camera lens sends it straight back.</span></span></li>
-      <li><span><b>IR check.</b> <span class="muted">In the dark, look for night-vision lights your eyes cannot see.</span></span></li>
-      <li><span><b>Results.</b> <span class="muted">See what we checked and save a report.</span></span></li>
-    </ol>
-
-    <a class="btn primary" href="lens.html">Start the check</a>
-
-    <ul class="list more">
-      <li><a href="results.html"><span class="label">Results</span><span class="hint">From this phone</span></a></li>
-      <li><a href="help.html"><span class="label">If you found something</span><span class="hint">What to do next</span></a></li>
-      <li><a href="challenge.html"><span class="label">Wi-Fi check</span><span class="hint">Laptop step, needs a Mac</span></a></li>
+    <ul class="group">
+      <li><div class="step"><span class="n">1</span><span><b>Lens check.</b> <span class="muted">The torch blinks a secret pattern. A camera lens sends it straight back.</span></span></div></li>
+      <li><div class="step"><span class="n">2</span><span><b>IR check.</b> <span class="muted">In the dark, look for night-vision lights your eyes cannot see.</span></span></div></li>
+      <li><div class="step"><span class="n">3</span><span><b>Results.</b> <span class="muted">See what was checked and save a report.</span></span></div></li>
     </ul>
 
-    <p class="muted small" style="margin-top:28px">Runs on this phone. Nothing is uploaded.</p>
+    <a class="btn primary start" href="lens.html">Start the check</a>
+
+    <div class="label">More</div>
+    <ul class="group">
+      <li><a href="results.html"><span class="grow">Results</span><span class="hint">This phone</span><span class="chev" aria-hidden="true">&rsaquo;</span></a></li>
+      <li><a href="network.html"><span class="grow">Network check</span><span class="hint">Android app</span><span class="chev" aria-hidden="true">&rsaquo;</span></a></li>
+      <li><a href="help.html"><span class="grow">If you found something</span><span class="chev" aria-hidden="true">&rsaquo;</span></a></li>
+      <li><a href="challenge.html"><span class="grow">Wi-Fi check</span><span class="hint">Laptop step</span><span class="chev" aria-hidden="true">&rsaquo;</span></a></li>
+    </ul>
+    <p class="foot">Runs on this phone. Nothing is uploaded.</p>
+
+    <div class="qr" id="qrBox">
+      <canvas id="qr"></canvas>
+      <p class="muted small" style="margin:0">Open this on an Android phone: scan the code with the camera, then tap Start the check.</p>
+    </div>
   </main>
   <script type="module">
     import { initPage } from './src/ui.js';
     import { TAGLINE } from './src/config.js';
     initPage('');
     document.getElementById('tagline').textContent = TAGLINE;
+    // QR code for the laptop view only; loaded lazily so phones never fetch it.
+    if (matchMedia('(min-width: 900px) and (hover: hover)').matches) {
+      import('qrcode').then(({ default: QR }) => QR.toCanvas(document.getElementById('qr'),
+        location.protocol === 'https:' ? location.href.split('?')[0] : 'https://arjavnotfound.github.io/victor-hackathon/',
+        { margin: 0, width: 120 }));
+    }
   </script>
 </body>
 </html>

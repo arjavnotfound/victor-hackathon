@@ -33,7 +33,8 @@ describe('report fingerprint', () => {
     const lines = checkLines(base.checks, null);
     expect(lines[0][1]).toMatch(/^Yes, 2 scans/);
     expect(lines[1][1]).toBe('No');
-    expect(lines[2][1]).toBe('Not saved on this device');
+    expect(lines[2][1]).toBe('No');
+    expect(lines[3][1]).toBe('Not saved on this device');
     expect(reportContent(base).limits).toBe(LIMITS);
   });
 });

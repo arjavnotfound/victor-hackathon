@@ -61,6 +61,7 @@ await step('lens check (demo) finds the simulated lens, seen twice, and saves it
     await page.waitForTimeout(800); // the demo camera drifts a little, like a hand
   }
   assert.match(await text('#status'), /Seen twice, worth a closer look/);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#scanBtn')).opacity), '1');
   await shot('lens-found');
   await page.click('#detailsBtn');
   assert.match(await text('#debugInfo'), /frames per bit/);
@@ -104,7 +105,7 @@ await step('IR check (demo) flags the simulated night-vision lights', async () =
 
 await step('results show the saved spot, and the PDF is real and carries the fingerprint', async () => {
   await page.goto(base + '/results.html');
-  assert.match(await text('#summary'), /1 spot worth a closer look/);
+  assert.match(await text('#summary'), /1 thing worth a closer look/);
   assert.equal(await page.locator('.spot img').count(), 1);
   assert.match(await text('#checks'), /Lens check\s+Yes/);
   assert.match(await text('#checks'), /IR check\s+Yes/);
@@ -132,8 +133,41 @@ await step('Wi-Fi page still loads and the demo replay finds the camera', async 
   await shot('challenge');
   await page.click('#demoBtn');
   await page.waitForSelector('#results:not([hidden])', { timeout: 30000 });
-  assert.match(await text('#verdict'), /Camera found/);
+  assert.match(await text('#verdict'), /A device followed the flashes/);
+  await page.locator('#results').scrollIntoViewIfNeeded();
   await shot('challenge-result');
+});
+
+await step('network check in a browser points to the Android app', async () => {
+  await page.goto(base + '/network.html');
+  assert.equal(await page.isVisible('#webOnly'), true);
+  assert.equal(await page.isVisible('#runBtn'), false);
+  await shot('network');
+});
+
+await step('dark mode screens', async () => {
+  const dark = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: 'dark', reducedMotion: 'reduce' });
+  const p = await dark.newPage();
+  p.on('pageerror', (e) => errors.push(`${p.url()}: ${e.message}`));
+  for (const [name, path] of [['home', '/'], ['help', '/help.html'], ['results', '/results.html'], ['network', '/network.html']]) {
+    await p.goto(base + path);
+    await p.screenshot({ path: `${SHOTS}/dark-${name}.png` });
+  }
+  await p.goto(base + '/challenge.html');
+  await p.click('#demoBtn');
+  await p.waitForSelector('#results:not([hidden])', { timeout: 30000 });
+  await p.locator('#results').scrollIntoViewIfNeeded();
+  await p.screenshot({ path: `${SHOTS}/dark-challenge-result.png` });
+  await dark.close();
+});
+
+await step('laptop home shows a QR code for phones', async () => {
+  const wide = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  const p = await wide.newPage();
+  await p.goto(base + '/');
+  await p.waitForFunction(() => document.querySelector('#qr').width > 0, null, { timeout: 10000 });
+  await p.screenshot({ path: `${SHOTS}/laptop-home.png` });
+  await wide.close();
 });
 
 await step('no console errors anywhere', async () => {

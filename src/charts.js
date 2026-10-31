@@ -3,6 +3,9 @@
 
 export const DARK = { bg: '#0e0e0f', grid: '#202023', text: '#8b8b90', line: '#ededee', band: 'rgba(255,255,255,.07)', step: '#e5b45a', colors: ['#ededee', '#eb6b6b', '#6fcf97', '#8b8b90'] };
 export const LIGHT = { bg: '#ffffff', grid: '#dde1e8', text: '#555e6e', line: '#0b6fb8', band: 'rgba(255,170,40,.22)', step: '#c77700', colors: ['#0b6fb8', '#c62839', '#1a8a4a', '#7a3fc2'] };
+// On screen the charts sit on a card, so match the page's light or dark mode.
+export const screenTheme = () => (globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches
+  ? { ...DARK, bg: '#1c1c1e', grid: '#2c2c2e' } : LIGHT);
 
 function setup(canvas, w, h) {
   const dpr = canvas.isConnected ? window.devicePixelRatio || 1 : 2;

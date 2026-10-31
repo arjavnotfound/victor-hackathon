@@ -26,8 +26,8 @@ export default defineConfig({
         scope: './',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#f6f3ee',
-        theme_color: '#1d5c58',
+        background_color: '#f2f2f7',
+        theme_color: '#0b7a70',
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -47,6 +47,7 @@ export default defineConfig({
         ir: resolve(import.meta.dirname, 'ir.html'),
         results: resolve(import.meta.dirname, 'results.html'),
         help: resolve(import.meta.dirname, 'help.html'),
+        network: resolve(import.meta.dirname, 'network.html'),
         challenge: resolve(import.meta.dirname, 'challenge.html'),
       },
     },

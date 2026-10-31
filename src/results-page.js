@@ -6,31 +6,35 @@ import { buildReport } from './report.js';
 import { $, isDemo, initPage } from './ui.js';
 
 initPage('Results');
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 function render() {
   const checks = getChecks(), wifi = getWifiResult(), snaps = getSnapshots();
-  const anyCheck = checks.lens || checks.ir || wifi;
+  const anyCheck = checks.lens || checks.ir || checks.network || wifi;
   const wifiFlag = wifi && (wifi.verdict === 'camera' || wifi.verdict === 'maybe');
+  const netFlags = checks.network?.flagged || [];
 
   if (!anyCheck && !snaps.length) $('summary').textContent = 'No checks yet on this phone.';
-  else if (snaps.length || wifiFlag) {
-    const n = snaps.length;
+  else if (snaps.length || wifiFlag || netFlags.length) {
+    const n = snaps.length + netFlags.length;
     $('summary').textContent = n
-      ? `${n} spot${n > 1 ? 's' : ''} worth a closer look.`
+      ? `${n} thing${n > 1 ? 's' : ''} worth a closer look.`
       : 'The Wi-Fi check found something worth a closer look.';
   } else $('summary').textContent = NOTHING_FOUND;
   $('limits').textContent = LIMITS;
 
   $('checks').innerHTML = checkLines(checks, wifi)
-    .map(([k, v]) => `<li><span>${k}</span><span>${v}</span></li>`).join('');
+    .map(([k, v]) => `<li><div class="pair"><span>${k}</span><span>${esc(v)}</span></div></li>`).join('');
 
+  $('netSec').hidden = !netFlags.length;
+  $('netList').innerHTML = netFlags.map((f) => `<li><b>${esc(f.label)}</b><span class="hint">${esc(f.detail)}</span></li>`).join('');
   $('spotsSec').hidden = !snaps.length;
   $('spots').innerHTML = snaps.map((s) => `
-    <figure class="spot" style="margin:0 0 20px">
+    <li class="spot">
       ${s.image ? `<img src="${s.image}" alt="Saved spot from the ${s.mode === 'ir' ? 'IR' : 'lens'} check">` : ''}
-      <p>${s.label || s.note || 'Saved spot'}</p>
-      <p class="when">${s.mode === 'ir' ? 'IR check' : 'Lens check'} · ${new Date(s.time).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</p>
-    </figure>`).join('');
+      <span>${esc(s.label || s.note || 'Saved spot')}</span>
+      <span class="hint">${s.mode === 'ir' ? 'IR check' : 'Lens check'} · ${new Date(s.time).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
+    </li>`).join('');
 }
 
 $('reportBtn').addEventListener('click', async () => {
