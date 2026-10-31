@@ -64,7 +64,7 @@
         Drop a .pcap or .pcapng file, or click to choose
         <input id="fileIn" type="file" accept=".pcap,.pcapng,.cap" hidden />
       </div>
-      <p id="progress" class="muted small" style="margin-top:10px"></p>
+      <p id="progress" style="margin-top:12px"></p>
       <div class="row small">
         <button id="demoBtn">Try with sample data</button>
       </div>
@@ -76,6 +76,18 @@
           <label>Start time<input id="startIn" type="text" class="mono" placeholder="not recorded" /></label>
         </div>
       </details>
+    </section>
+
+    <section id="summary" class="card" hidden>
+      <div class="step-n">This file</div>
+      <p id="summaryMsg"></p>
+      <p id="summaryInfo" class="muted small"></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Busiest devices</th><th>Maker</th><th>Packets</th><th>Data</th><th>Signal</th></tr></thead>
+          <tbody id="summaryTable"></tbody>
+        </table>
+      </div>
     </section>
 
     <section id="results" class="card" hidden>

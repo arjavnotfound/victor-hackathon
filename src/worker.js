@@ -2,7 +2,7 @@
 // so it runs here and the page stays smooth.
 
 import { parseCapture } from './pcap.js';
-import { analyzeCapture } from './analysis.js';
+import { analyzeCapture, summarizeCapture } from './analysis.js';
 import { makeDemoCapture } from './sim.js';
 
 self.onmessage = async (e) => {
@@ -17,8 +17,16 @@ self.onmessage = async (e) => {
     const hash = await sha256Hex(buffer);
     self.postMessage({ type: 'progress', text: 'Reading packets…' });
     const cap = parseCapture(buffer);
+    const summary = summarizeCapture(cap);
+    if (!cap.t.length) throw new Error('the file has no packets in it.');
+    // Without a code we can still show what is in the file.
+    if (!msg.opts.code) {
+      self.postMessage({ type: 'summary', summary, hash, format: cap.format });
+      return;
+    }
     self.postMessage({ type: 'progress', text: `Scoring ${cap.macs.length} transmitters against the code…` });
     const result = analyzeCapture(cap, msg.opts);
+    result.summary = summary;
     result.fileHash = hash;
     result.fileBytes = buffer.byteLength;
     result.format = cap.format;

@@ -17,7 +17,15 @@ worker.onmessage = (e) => {
   const m = e.data;
   if (m.type === 'progress') $('progress').textContent = m.text;
   if (m.type === 'error') { $('progress').textContent = 'Could not read that file: ' + m.text; }
-  if (m.type === 'done') { result = m.result; selected = 0; $('progress').textContent = ''; showResult(); }
+  if (m.type === 'summary') {
+    $('progress').textContent = '';
+    showSummary(m.summary, 'No secret code yet, so this file can\'t be tested for a camera. Run Step 1 with the Sniffer recording, then drop the new file. Here is what is in this one:');
+  }
+  if (m.type === 'done') {
+    result = m.result; selected = 0; $('progress').textContent = '';
+    if (result.devices.length) showResult();
+    else showSummary(result.summary, 'Nothing in this file was streaming video during the test, so there is no camera to score. Check the Sniffer was on the right channel and recording while the screen flashed. Here is what it did catch:');
+  }
 };
 
 function showSession() {
@@ -84,16 +92,17 @@ async function runChallenge() {
 
 function readInputs() {
   const bits = $('codeIn').value.replace(/[^01]/g, '').split('').map(Number);
-  if (bits.length < 6) throw new Error('Enter the secret code (the 12 ones and zeros).');
   const st = $('startIn').value.trim();
   const startMs = st ? Date.parse(st) : null;
-  return { code: bits, startMs: Number.isFinite(startMs) ? startMs : null, bitMs: BIT_MS };
+  // No code = we can't test for a camera, but we still show what is in the file.
+  return { code: bits.length >= 6 ? bits : null, startMs: Number.isFinite(startMs) ? startMs : null, bitMs: BIT_MS };
 }
 
 async function analyzeFile(file) {
-  let opts;
-  try { opts = readInputs(); } catch (e) { $('progress').textContent = e.message; return; }
-  session = { ...opts };
+  const opts = readInputs();
+  if (opts.code) session = { ...opts };
+  $('results').hidden = true;
+  $('summary').hidden = true;
   fileName = file.name;
   isDemo = false;
   $('progress').textContent = `Loading ${file.name}…`;
@@ -114,6 +123,18 @@ function runDemo() {
 }
 
 // ---------- 3. results ----------
+
+function showSummary(sum, message) {
+  $('summary').hidden = false;
+  $('summaryMsg').textContent = message;
+  const secs = Math.max(0, sum.end - sum.start);
+  $('summaryInfo').textContent = `${sum.totalFrames} packets over ${secs.toFixed(0)} s from ${sum.transmitters} devices` +
+    (sum.channels.length ? `, channel ${sum.channels.join(', ')}` : '') + '.';
+  $('summaryTable').innerHTML = sum.top.map((d) => `
+    <tr><td class="mono">${d.mac}</td><td>${d.vendor}</td><td class="mono">${d.frames}</td>
+    <td class="mono">${(d.bytes / 1024).toFixed(0)} KB</td><td class="mono">${d.meanRssi != null ? d.meanRssi.toFixed(0) : '—'}</td></tr>`).join('');
+  $('summary').scrollIntoView({ behavior: 'smooth' });
+}
 
 const VERDICT = {
   camera: ['Camera found', 'verdict camera'],
@@ -195,6 +216,13 @@ async function makeReport() {
 
 // ---------- wiring ----------
 
+// Dropping a file anywhere on the page counts (and stops the browser opening it).
+document.addEventListener('dragover', (e) => e.preventDefault());
+document.addEventListener('drop', (e) => {
+  e.preventDefault();
+  if (e.target.closest('#drop')) return;
+  if (e.dataTransfer.files[0]) analyzeFile(e.dataTransfer.files[0]);
+});
 const drop = $('drop');
 drop.addEventListener('click', () => $('fileIn').click());
 $('fileIn').addEventListener('change', (e) => e.target.files[0] && analyzeFile(e.target.files[0]));

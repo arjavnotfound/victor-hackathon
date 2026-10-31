@@ -235,6 +235,42 @@ export function verdict(d) {
   return 'no';
 }
 
+/**
+ * Quick overview of a capture, no code needed: who is talking, how much,
+ * and how strong their signal is. Shown even when we can't run the test.
+ */
+export function summarizeCapture(cap) {
+  const n = cap.t.length;
+  const per = new Map();
+  const chans = new Map();
+  let t0 = Infinity, t1 = -Infinity;
+  for (let i = 0; i < n; i++) {
+    if (cap.t[i] < t0) t0 = cap.t[i];
+    if (cap.t[i] > t1) t1 = cap.t[i];
+    if (cap.freq[i]) { const ch = freqToChannel(cap.freq[i]); chans.set(ch, (chans.get(ch) || 0) + 1); }
+    const s = cap.src[i];
+    if (s < 0) continue;
+    let d = per.get(s);
+    if (!d) { d = { frames: 0, data: 0, bytes: 0, rssiSum: 0, rssiN: 0 }; per.set(s, d); }
+    d.frames++; d.bytes += cap.len[i];
+    if ((cap.kind[i] === KIND_DATA && cap.payload[i]) || cap.kind[i] === KIND_ETH) d.data++;
+    if (!Number.isNaN(cap.rssi[i])) { d.rssiSum += cap.rssi[i]; d.rssiN++; }
+  }
+  const top = [...per.entries()]
+    .sort((a, b) => b[1].bytes - a[1].bytes)
+    .slice(0, 10)
+    .map(([s, d]) => ({
+      mac: cap.macs[s], ...lookupVendor(cap.macs[s]), frames: d.frames, dataFrames: d.data, bytes: d.bytes,
+      meanRssi: d.rssiN ? d.rssiSum / d.rssiN : null,
+    }));
+  return {
+    totalFrames: n, start: t0, end: t1, transmitters: cap.macs.length,
+    channels: [...chans.entries()].sort((a, b) => b[1] - a[1]).map(([ch]) => ch),
+    streaming: top.filter((d) => d.dataFrames >= DEFAULTS.minFrames).length,
+    top,
+  };
+}
+
 function sum(a) { let s = 0; for (const v of a) s += v; return s; }
 function thin(pts, max) {
   if (pts.length <= max) return pts;
