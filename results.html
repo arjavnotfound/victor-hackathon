@@ -67,9 +67,21 @@
   </main>
 
   <div class="bottom-bar">
-    <button id="reportBtn" class="btn primary"><span data-icon="share"></span>Save report (PDF)</button>
+    <button id="reportBtn" class="btn primary" data-sheet="aboutSheet"><span data-icon="share"></span>Save report (PDF)</button>
     <p id="reportNote" class="caption" role="status" hidden></p>
   </div>
+
+  <aside id="aboutSheet" class="sheet" hidden aria-label="Report details">
+    <span class="grabber"></span>
+    <div class="sheet-head"><button class="text-btn" data-close>Cancel</button><h3>Report</h3><span></span></div>
+    <p class="footer" style="margin-top:0">All optional. These go at the top of the PDF.</p>
+    <ul class="group">
+      <li><label class="field"><span>Place and room</span><input id="aboutPlace" autocomplete="off" placeholder="Hostel block B, room 204"></label></li>
+      <li><label class="field"><span>Your name</span><input id="aboutName" autocomplete="name" placeholder="Name"></label></li>
+      <li><label class="field"><span>Notes</span><textarea id="aboutNotes" rows="3" placeholder="Anything you want on record"></textarea></label></li>
+    </ul>
+    <button class="btn primary" id="makePdf" type="button">Save PDF</button>
+  </aside>
 
   <aside id="confirmClear" class="sheet" hidden aria-label="Clear results">
     <span class="grabber"></span>

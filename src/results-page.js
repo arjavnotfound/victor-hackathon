@@ -46,13 +46,20 @@ function render() {
   $('reportBtn').disabled = !f.any;
 }
 
-$('reportBtn').addEventListener('click', async () => {
+// Place and name are remembered on this phone so the next report is quicker.
+const ABOUT = ['aboutPlace', 'aboutName', 'aboutNotes'];
+try { const a = JSON.parse(localStorage.getItem('victor.about') || '{}'); for (const k of ABOUT) $(k).value = a[k] || ''; } catch { /* storage blocked */ }
+
+$('makePdf').addEventListener('click', async () => {
+  const about = { place: $('aboutPlace').value.trim(), name: $('aboutName').value.trim(), notes: $('aboutNotes').value.trim() };
+  try { localStorage.setItem('victor.about', JSON.stringify(Object.fromEntries(ABOUT.map((k) => [k, $(k).value])))); } catch { /* storage blocked */ }
+  closeSheet();
   $('reportBtn').disabled = true;
   $('reportNote').hidden = false;
   $('reportNote').textContent = 'Making the report…';
   try {
     const { blob, contentHash, name } = await buildReport({
-      snapshots: getSnapshots(), checks: getChecks(), wifi: getWifiResult(), phone: getPhone(),
+      snapshots: getSnapshots(), checks: getChecks(), wifi: getWifiResult(), phone: getPhone(), about,
       // Say DEMO whenever the simulated camera or sample Wi-Fi data was used.
       demo: isDemo || /simulated/.test(getPhone()?.camera || '') || !!getWifiResult()?.demo,
     });

@@ -6,7 +6,8 @@ import { jsPDF } from 'jspdf';
 import { drawTraffic, drawRssi, LIGHT } from './charts.js';
 import { codeToString } from './code.js';
 import { APP_NAME } from './config.js';
-import { reportContent, fingerprint, NOTHING_FOUND, LIMITS } from './report-content.js';
+import { countSeen } from './coverage.js';
+import { reportContent, fingerprint, findings, checkRows, NOTHING_FOUND, LIMITS } from './report-content.js';
 
 const VERDICT_TEXT = {
   camera: "A device's traffic followed the secret code. Worth a closer look.",
@@ -20,14 +21,14 @@ const VERDICT_TEXT = {
  * are the full Wi-Fi analysis when the report is made on the Wi-Fi page.
  */
 export async function buildReport({
-  session, result, device, snapshots = [], fileName = '', demo = false, checks = {}, wifi = null, phone = null,
+  session, result, device, snapshots = [], fileName = '', demo = false, checks = {}, wifi = null, phone = null, about = {},
 }) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const W = 210, M = 15;
   let y = 18;
   const line = (txt, size = 10, bold = false, color = 20) => {
     doc.setFont('helvetica', bold ? 'bold' : 'normal');
-    doc.setFontSize(size); doc.setTextColor(color);
+    doc.setFontSize(size); doc.setTextColor(...[].concat(color));
     for (const l of doc.splitTextToSize(txt, W - 2 * M)) {
       if (y > 282) { doc.addPage(); y = 18; }
       doc.text(l, M, y); y += size * 0.45 + 1.2;
@@ -38,7 +39,7 @@ export async function buildReport({
   const now = new Date();
   const top = device || result?.devices[0];
   const content = reportContent({
-    made: now.toISOString(), demo, checks, wifi, snapshots, phone,
+    made: now.toISOString(), about, demo, checks, wifi, snapshots, phone,
     wifiDetail: result ? {
       code: session ? codeToString(session.code) : '', fileHash: result.fileHash,
       devices: result.devices.slice(0, 6).map((x) => ({ mac: x.mac, score: +x.score.toFixed(3), verdict: x.verdict })),
@@ -46,32 +47,79 @@ export async function buildReport({
   });
   const contentHash = await fingerprint(content);
 
-  line(`${APP_NAME} privacy check report`, 20, true);
-  line(`Made ${now.toLocaleString()} (UTC ${now.toISOString()})`, 9, false, 90);
-  if (demo) line('DEMO: this report uses simulated data, not a real room.', 10, true, 180);
-  gap();
+  // Layout: a tinted header band, a one-line summary, then one section per
+  // check. Colours are kept to the app's teal and a calm amber for findings.
+  const TEAL = [11, 122, 112], AMBER = [178, 106, 0], GREY = 110;
+  const need = (h) => { if (y + h > 282) { doc.addPage(); y = 18; } };
+  const section = (title) => {
+    need(16); gap(4);
+    doc.setDrawColor(220); doc.line(M, y - 4, W - M, y - 4);
+    line(title, 13, true); gap(1);
+  };
+  doc.setFillColor(...TEAL); doc.rect(0, 0, W, 34, 'F');
+  doc.setTextColor(255); doc.setFont('helvetica', 'bold'); doc.setFontSize(20);
+  doc.text(`${APP_NAME} room check`, M, 15);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  doc.text(now.toLocaleString([], { dateStyle: 'long', timeStyle: 'short' }), M, 23);
+  const who = [about.place, about.name && `Checked by ${about.name}`].filter(Boolean).join('  ·  ');
+  if (who) doc.text(doc.splitTextToSize(who, W - 2 * M)[0], M, 29);
+  y = 44;
+  if (demo) line('DEMO: this report uses simulated data, not a real room.', 10, true, AMBER);
+  const f = findings(checks, wifi, snapshots);
+  doc.setTextColor(...(f.count ? AMBER : TEAL));
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+  doc.text(f.text, M, y); y += 8;
+  if (about.notes) { line('Notes', 10, true); line(about.notes, 10); gap(2); }
 
-  line('1. What was checked', 13, true);
-  for (const [k, v] of content.checks) kv(k, v);
-  gap();
-
-  line('2. Spots worth a closer look', 13, true);
-  if (!snapshots.length) line(NOTHING_FOUND, 10);
-  for (const s of snapshots) {
-    if (y > 200) { doc.addPage(); y = 18; }
-    const kind = s.mode === 'ir' ? 'IR check' : `Lens check${s.code ? ', torch code ' + s.code : ''}`;
-    line(`${new Date(s.time).toLocaleString()}  ·  ${kind}  ·  ${s.label || s.note || ''}`, 9);
-    if (!s.image) { line('(photo too large to keep)', 9, false, 100); continue; }
-    const props = doc.getImageProperties(s.image);
-    const iw = 110, ih = iw * props.height / props.width;
-    doc.addImage(s.image, 'JPEG', M, y, iw, ih);
-    y += ih + 4;
+  section('Checks done');
+  for (const r of checkRows(checks, wifi, snapshots, () => '')) {
+    need(7);
+    const c = r.tone === 'warn' ? AMBER : r.tone === 'ok' ? TEAL : [GREY, GREY, GREY];
+    doc.setFillColor(...c); doc.circle(M + 1.5, y - 1.3, 1.3, 'F');
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(20);
+    doc.text(r.name, M + 6, y);
+    doc.setTextColor(...c); doc.text(r.status, M + 70, y);
+    if (r.detail) { doc.setTextColor(GREY); doc.text(r.detail, W - M, y, { align: 'right' }); }
+    y += 6.5;
   }
-  for (const f of content.network) line(`Network check  ·  ${f.label}: ${f.detail}`, 9);
-  line(LIMITS, 9, false, 60);
-  gap();
+  if (countSeen(checks.coverage?.seen)) line('Directions covered shows where the phone pointed during scans, not that a direction is clear.', 8, false, GREY);
 
-  line('3. Wi-Fi check details', 13, true);
+  section('Saved spots');
+  if (!snapshots.length) line(NOTHING_FOUND, 10);
+  // Two photos per row with their caption underneath.
+  const colW = (W - 2 * M - 6) / 2;
+  snapshots.forEach((s, i) => {
+    const x = M + (i % 2) * (colW + 6);
+    let ih = 30;
+    if (s.image) { const p = doc.getImageProperties(s.image); ih = colW * p.height / p.width; }
+    if (i % 2 === 0) need(ih + 14);
+    const top = y;
+    if (s.image) doc.addImage(s.image, 'JPEG', x, top, colW, ih);
+    else { doc.setFillColor(240); doc.rect(x, top, colW, ih, 'F'); }
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(20);
+    doc.text(doc.splitTextToSize(s.label || s.note || 'Saved spot', colW)[0], x, top + ih + 5);
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(GREY);
+    doc.text(`${s.mode === 'ir' ? 'Night-vision lights' : 'Lens check'}  ·  ${new Date(s.time).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`, x, top + ih + 9.5);
+    if (i % 2 === 1 || i === snapshots.length - 1) y = top + ih + 15;
+  });
+
+  section('Network');
+  if (!checks.network) line('Not run on this phone.', 10);
+  else if (!content.network.length) line(`${NOTHING_FOUND} ${checks.network.nearby} nearby networks and ${checks.network.devices} devices looked at.`, 10);
+  for (const n of content.network) {
+    need(12);
+    line(n.label, 10, true);
+    for (const r of n.reasons || [n.detail]) line(`-  ${r}`, 9, false, 60);
+    gap(1);
+  }
+
+  need(18); gap(3);
+  doc.setFillColor(245, 245, 247);
+  const lim = doc.splitTextToSize(LIMITS, W - 2 * M - 8);
+  doc.roundedRect(M, y - 4, W - 2 * M, lim.length * 4.4 + 6, 2, 2, 'F');
+  doc.setFontSize(9); doc.setTextColor(60); doc.text(lim, M + 4, y + 1); y += lim.length * 4.4 + 6;
+
+  section('Wi-Fi traffic details');
   if (result && session) {
     kv('Secret code', `${codeToString(session.code)} (${session.code.length} bits, ${session.bitMs / 1000} s per bit; 1 = screen flickering)`);
     kv('Challenge started', session.startMs ? new Date(session.startMs).toISOString() : 'not recorded (whole capture searched)');
@@ -108,11 +156,10 @@ export async function buildReport({
       line(`${x.mac}  ${x.vendor.padEnd(14)}  score ${x.score.toFixed(2)}  p ${x.p.toFixed(3)}  ${x.verdict}`, 9);
     }
   } else {
-    line(wifi ? content.checks[3][1] : 'Not run on this device.', 10);
+    line(wifi ? content.checks[3][1] : 'Not run on this phone.', 10);
   }
-  gap();
 
-  line('4. Phone and browser', 13, true);
+  section('Phone used');
   if (phone) {
     if (phone.model) kv('Phone', phone.model + (phone.platform ? ` (${phone.platform})` : ''));
     if (phone.camera) kv('Camera', phone.camera);
@@ -121,19 +168,16 @@ export async function buildReport({
   } else {
     line('Not recorded.', 10);
   }
-  gap();
 
-  line('5. How the checks work', 13, true);
+  section('How the checks work');
   line('Lens: the phone torch blinked a random code. A camera lens reflects light straight back to its source, so it blinks back in the same code. Only small dots that matched the code were marked. A spot seen again after the phone moved is less likely to be a passing reflection.', 9);
-  line('Network: the app listed Wi-Fi networks nearby and devices on the joined Wi-Fi, and looked for camera-style names, camera chip makers, video streaming ports and replies to the standard camera discovery message.', 9);
+  line('Network: the app listed Wi-Fi networks nearby and devices on the joined Wi-Fi. It looked for default camera hotspot names, camera chip makers, devices that answer as a video stream, and devices that reply to or announce themselves with the standard camera messages.', 9);
   line('IR: with the lights and the torch off, the phone camera looked for small bright points that stayed on or blinked steadily, like the night-vision lights some cameras have.', 9);
   line('Wi-Fi: the screen flickered in a random code in front of the object. A streaming camera must send more data when its picture changes, so its traffic rises and falls with the code. Each device was scored by correlation, and compared with 200 random codes to get the p-value.', 9);
   line('Limits: a high score is strong evidence, not proof in law. Cameras that only record to a memory card, or use mobile data, do not show up in the Wi-Fi test.', 9);
-  gap();
-  gap();
-  if (y > 255) { doc.addPage(); y = 18; } // keep the heading with its fingerprint
-  line('6. Fingerprint', 13, true);
-  line(`Content fingerprint (SHA-256): ${contentHash}`, 9, true);
+  need(30); // keep the heading with its fingerprint
+  section('Fingerprint');
+  doc.setFont('courier', 'normal'); doc.setFontSize(9); doc.setTextColor(20); doc.text(contentHash, M, y); y += 5;
   line('This code is worked out from everything in this report, photos included, so if anyone changes the contents later the code will no longer match.', 9);
   gap();
   line(`Made with ${APP_NAME}. Team VICTOR.`, 8, false, 100);

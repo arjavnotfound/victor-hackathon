@@ -116,13 +116,19 @@ await step('results show the saved spot, and the PDF is real and carries the fin
   assert.match(await text('#checks'), /Directions covered[^]*\d+ of 12/); // demo turns the heading slowly
   assert.match(await text('#checks'), /Night-vision lights[^]*back camera/);
   await shot('results');
-  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#reportBtn')]);
+  await page.click('#reportBtn');
+  await page.waitForTimeout(350);
+  await page.fill('#aboutPlace', 'Hostel block B, room 204');
+  await page.fill('#aboutName', 'Test student');
+  await page.fill('#aboutNotes', 'Checked before moving in.');
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#makePdf')]);
   const path = await dl.path();
   const pdf = readFileSync(path);
   if (process.env.PDF_OUT) copyFileSync(path, process.env.PDF_OUT);
   assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
   const shown = (await text('#reportHash')).match(/[0-9a-f]{64}/)[0];
   assert.ok(pdf.toString('latin1').includes(shown), 'content fingerprint printed in the PDF');
+  assert.ok(pdf.toString('latin1').includes('Hostel block B, room 204'), 'place printed in the PDF');
   console.log('      PDF', dl.suggestedFilename(), pdf.length, 'bytes, fingerprint', shown.slice(0, 12) + '…');
   await shot('results-report');
 });

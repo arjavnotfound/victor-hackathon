@@ -88,9 +88,10 @@ export function checkLines(checks = {}, wifi = null) {
  * Everything the report says, as one plain object. The fingerprint is taken
  * of exactly this, so the same inputs always give the same fingerprint.
  */
-export function reportContent({ made, demo = false, checks = {}, wifi = null, snapshots = [], phone = null, wifiDetail = null }) {
+export function reportContent({ made, about = {}, demo = false, checks = {}, wifi = null, snapshots = [], phone = null, wifiDetail = null }) {
   return {
     made,
+    about: { place: about.place || '', name: about.name || '', notes: about.notes || '' },
     demo: !!demo,
     checks: checkLines(checks, wifi),
     network: checks.network?.flagged || [],
