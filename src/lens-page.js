@@ -10,7 +10,7 @@
 import { makeCode, codeToString } from './code.js';
 import {
   toGray, localContrast, correlateCode, findBlobs, updateTracks, blinkImage, LENS_DEFAULTS, spotLabel,
-  estimateTorchLag, timingFromCalibration, estimateShift,
+  estimateTorchLag, timingFromCalibration, estimateShift, mergeRejects,
 } from './lens.js';
 import { addSnapshot, getSnapshots, markCheck, savePhone, getChecks } from './store.js';
 import { openCamera, setTorch, lockForTorch, phoneInfo } from './camera.js';
@@ -27,15 +27,19 @@ const settings = buildSliders($('sliders'), 'lens', LENS_DEFAULTS, [
   ['rMin', 'Match needed (correlation)', 0.5, 0.99, 0.01],
   ['ampMin', 'Smallest blink (grey levels)', 1, 60, 1],
   ['maxArea', 'Biggest dot (pixels)', 2, 200, 1],
+  ['fillMin', 'Roundness: fills its box at least', 0.3, 1, 0.05],
+  ['aspectMin', 'Roundness: width to height at least', 0.2, 1, 0.05],
   ['bitMs', 'Bit length (ms)', 200, 900, 10],
   ['settleMs', 'Settle time (ms)', 40, 400, 10],
   ['bits', 'Code length (bits)', 6, 16, 1],
 ]);
 
 let cam = null, grab = null, busy = false, torchOk = false, calTried = false;
-let spots = [], tracks = [], scans = getChecks().lens?.scans || 0, lastCode = null;
+let spots = [], ignored = [], tracks = [], scans = getChecks().lens?.scans || 0, lastCode = null;
 
 const style = (s) => ({ color: s.confirmed ? '#ffb340' : 'rgba(255, 255, 255, .9)', text: s.confirmed ? 'Seen twice' : 'Possible reflection' });
+const REASON = { shape: 'Wrong shape', flash: "Doesn't follow the flash" };
+const ignoredStyle = (s) => ({ color: 'rgba(200, 200, 205, .75)', text: REASON[s.reason], small: true });
 
 function setStatus(text, warn = false) {
   $('status').textContent = text;
@@ -129,10 +133,13 @@ async function scan() {
   // Average each bit, then keep only small-scale detail (local contrast).
   sums.forEach((s, i) => { for (let p = 0; p < n; p++) s[p] /= counts[i]; });
   const contrast = sums.map((s) => localContrast(s, W, H, 4));
-  const { r, amp } = correlateCode(contrast, code);
+  const { r, amp, sd } = correlateCode(contrast, code);
+  const rejects = [];
   const blobs = findBlobs(r, amp, W, H, {
-    rMin: settings.rMin, ampMin: settings.ampMin, maxArea: settings.maxArea, raw: blinkImage(sums, code),
+    rMin: settings.rMin, ampMin: settings.ampMin, maxArea: settings.maxArea,
+    fillMin: settings.fillMin, aspectMin: settings.aspectMin, raw: blinkImage(sums, code), sd, rejects,
   });
+  ignored = mergeRejects(rejects).slice(0, 6);
   scans++;
   updateTracks(tracks, blobs, W * settings.trackDist);
   spots = blobs;
@@ -146,7 +153,7 @@ async function scan() {
   for (let p = 0; p < n; p++) if (r[p] > maxR) maxR = r[p];
   $('debugInfo').innerHTML =
     `code ${codeToString(code)}<br>frames per bit ${counts.join(',')} · ${fps.toFixed(0)} fps<br>` +
-    `best match ${maxR.toFixed(2)} · dots ${blobs.length} · scans ${scans}<br>` +
+    `best match ${maxR.toFixed(2)} · dots ${blobs.length} · ignored ${ignored.length} · scans ${scans}<br>` +
     `top score ${blobs[0]?.score ?? '-'} · torch misses ${torchMisses} · analysis ${W}x${H}<br>` +
     `torch timing: ${settings.calLag ? `${settings.calLag} ms to switch` : 'not measured'}`;
   if (spots.length) navigator.vibrate?.(spots.some((s) => s.confirmed) ? [30, 60, 30] : 30);
@@ -215,7 +222,7 @@ async function followHand() {
     if (have) {
       const { dx, dy, gain } = estimateShift(prev, cur, W, H);
       if ((dx || dy) && gain > 0.15) {
-        for (const s of [...spots, ...tracks]) { s.x += dx; s.y += dy; }
+        for (const s of [...spots, ...tracks, ...ignored]) { s.x += dx; s.y += dy; }
         redraw();
       }
     }
@@ -230,7 +237,10 @@ function redraw() {
   const dpr = sizeOverlay(overlay);
   octx.clearRect(0, 0, overlay.width, overlay.height);
   const now = performance.now();
-  if (grab) drawSpots(octx, spots, screenMapper(video, overlay, grab.W, grab.H), style, dpr, now);
+  if (!grab) return;
+  const map = screenMapper(video, overlay, grab.W, grab.H);
+  if (settings.showIgnored) drawSpots(octx, ignored, map, ignoredStyle, dpr);
+  drawSpots(octx, spots, map, style, dpr, now);
   // Keep drawing while new circles are still fading in.
   if (spots.some((s) => s.born && now - s.born < 300)) requestAnimationFrame(redraw);
 }
@@ -290,7 +300,9 @@ $('saveBtn').addEventListener('click', () => {
 });
 
 wireSheetButtons();
-$('clearBtn').addEventListener('click', () => { tracks = []; spots = []; redraw(); $('saveBtn').disabled = true; });
+$('clearBtn').addEventListener('click', () => { tracks = []; spots = []; ignored = []; redraw(); $('saveBtn').disabled = true; });
+$('ignoredToggle').checked = !!settings.showIgnored;
+$('ignoredToggle').addEventListener('change', (e) => { applySettings('lens', settings, { showIgnored: e.target.checked ? 1 : 0 }); redraw(); });
 $('recalBtn').addEventListener('click', () => {
   applySettings('lens', settings, { calibrated: false });
   calTried = false;

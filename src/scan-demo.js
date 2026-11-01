@@ -1,8 +1,9 @@
 // Simulated camera for laptops, tests and screenshots (lens.html?demo=1, ir.html?demo=1).
 // Draws a dim room with a phone charger. Inside the charger is a hidden lens
 // that lights up when the "torch" is on. There is also a glossy picture frame
-// (big reflection, should be ignored) and a standby LED blinking on its own
-// timer (does not follow the code, should be ignored).
+// (big reflection, should be ignored), the shiny edge of a spoon (a thin
+// streak that follows the torch, should be ignored for its shape) and a
+// standby LED blinking on its own timer (does not follow the code).
 
 export function createDemoCamera() {
   const c = document.createElement('canvas');
@@ -30,6 +31,12 @@ export function createDemoCamera() {
     // glossy picture frame: big reflection that follows the torch
     ctx.fillStyle = `rgb(${base + 20 + lit * 120},${base + 20 + lit * 120},${base + 25 + lit * 120})`;
     ctx.fillRect(110, 90, 190, 120);
+    // spoon on the table: its edge is a thin slanted glint under the torch
+    if (!cam.ir) {
+      ctx.strokeStyle = `rgb(${base + 10 + lit * 170},${base + 10 + lit * 170},${base + 14 + lit * 170})`;
+      ctx.lineWidth = 4; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(390, 140); ctx.lineTo(470, 205); ctx.stroke();
+    }
     // the hidden lens: tiny, and very bright only under the torch (retro-reflection)
     if (!cam.ir) {
       ctx.fillStyle = `rgb(${90 + lit * 165},${80 + lit * 160},${90 + lit * 165})`;

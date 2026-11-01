@@ -159,3 +159,77 @@ describe('hand movement', () => {
     expect(estimateShift(a, a, W, H)).toMatchObject({ dx: 0, dy: 0 });
   });
 });
+
+import { shapeOk, mergeRejects } from '../src/lens.js';
+
+// A map where the given pixels follow the code perfectly (r = 1, big blink).
+function mapOf(w, h, pixels) {
+  const r = new Float32Array(w * h), amp = new Float32Array(w * h);
+  for (const [x, y] of pixels) { r[y * w + x] = 1; amp[y * w + x] = 30; }
+  return { r, amp };
+}
+const disc = (cx, cy, rad) => {
+  const px = [];
+  for (let y = -rad; y <= rad; y++) for (let x = -rad; x <= rad; x++) if (x * x + y * y <= rad * rad + rad) px.push([cx + x, cy + y]);
+  return px;
+};
+
+describe('shape test', () => {
+  it('keeps a small round dot', () => {
+    const { r, amp } = mapOf(100, 60, disc(30, 30, 2));
+    const rejects = [];
+    const blobs = findBlobs(r, amp, 100, 60, { rejects });
+    expect(blobs).toHaveLength(1);
+    expect(rejects).toHaveLength(0);
+  });
+
+  it('drops a long slanted streak, like the edge of a spoon', () => {
+    const px = [];
+    for (let i = 0; i < 14; i++) px.push([20 + i, 10 + i], [21 + i, 10 + i]); // 2 px thick, 45 degrees
+    const { r, amp } = mapOf(100, 60, px);
+    const rejects = [];
+    expect(findBlobs(r, amp, 100, 60, { rejects })).toHaveLength(0);
+    expect(rejects[0].reason).toBe('shape');
+  });
+
+  it('drops a long straight streak', () => {
+    const px = [];
+    for (let i = 0; i < 12; i++) px.push([30 + i, 20], [30 + i, 21]);
+    const { r, amp } = mapOf(100, 60, px);
+    expect(findBlobs(r, amp, 100, 60)).toHaveLength(0);
+  });
+
+  it('drops a big blob, like a mirror', () => {
+    const { r, amp } = mapOf(100, 60, disc(50, 30, 6)); // about 120 px, over maxArea 40
+    const rejects = [];
+    expect(findBlobs(r, amp, 100, 60, { rejects })).toHaveLength(0);
+    expect(rejects).toEqual([expect.objectContaining({ reason: 'shape' })]);
+  });
+
+  it('never judges the shape of a dot too small to have one', () => {
+    expect(shapeOk({ area: 2, bw: 2, bh: 1 })).toBe(true);
+    expect(shapeOk({ area: 12, bw: 12, bh: 1 })).toBe(false);
+    expect(shapeOk({ area: 21, bw: 5, bh: 5 })).toBe(true);
+    expect(shapeOk({ area: 6, bw: 3, bh: 3 })).toBe(true); // a small pixelated dot
+    expect(shapeOk({ area: 28, bw: 15, bh: 14 })).toBe(false); // a slanted 2 px streak
+  });
+
+  it('reports a small thing that changed but not in the pattern', () => {
+    const w = 60, h = 40, n = w * h;
+    const r = new Float32Array(n), amp = new Float32Array(n), sd = new Float32Array(n);
+    for (const [x, y] of disc(20, 20, 1)) { sd[y * w + x] = 20; r[y * w + x] = 0.1; }
+    sd[5 * w + 50] = 20; // one noisy pixel: not reported
+    const rejects = [];
+    findBlobs(r, amp, w, h, { rejects, sd });
+    expect(rejects).toEqual([expect.objectContaining({ reason: 'flash' })]);
+  });
+});
+
+describe('ignored spots', () => {
+  it('shows one circle per streak, not one per piece', () => {
+    const pieces = [0, 4, 8, 12].map((i) => ({ x: 20 + i, y: 10 + i * 0.7, area: 1 + (i === 8 ? 3 : 0), reason: 'shape' }));
+    const merged = mergeRejects([...pieces, { x: 80, y: 40, area: 3, reason: 'flash' }]);
+    expect(merged).toHaveLength(2);
+    expect(merged[0]).toMatchObject({ x: 28, area: 7, reason: 'shape' });
+  });
+});

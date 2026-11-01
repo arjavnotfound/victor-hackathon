@@ -7,10 +7,10 @@
 // phone sees a hidden lens as a tiny bright dot that is bright when the torch
 // is on and dark when it is off.
 //
-// Ordinary shiny things (a screw, a glossy sticker) also reflect the torch,
-// but only at one exact angle, and they are usually bigger than a lens dot.
-// So we keep only small dots, and we ask for the same dot again after the
-// phone has moved a little.
+// Ordinary shiny things (a screw, a glossy sticker, a spoon) also reflect the
+// torch, but only at one exact angle, and they are usually bigger than a lens
+// dot or shaped like a streak. So we keep only small round dots, and we ask
+// for the same dot again after the phone has moved a little.
 
 /** RGBA ImageData bytes -> luminance (0..255) in `out`. */
 export function toGray(rgba, out) {
@@ -61,7 +61,8 @@ export function localContrast(gray, w, h, r = 4, out = new Float32Array(w * h)) 
  *
  * Also returns `amp` = mean(L when torch on) − mean(L when torch off), the
  * size of the blink in grey levels, so we can ignore tiny noisy wiggles that
- * happen to correlate.
+ * happen to correlate, and `sd`, how much the pixel changed at all over the
+ * scan (so we can show things that blink but not in our pattern).
  */
 export function correlateCode(frames, code) {
   const n = code.length;
@@ -73,6 +74,7 @@ export function correlateCode(frames, code) {
   const zeros = n - ones;
   const r = new Float32Array(len);
   const amp = new Float32Array(len);
+  const sd = new Float32Array(len);
   for (let p = 0; p < len; p++) {
     let mean = 0;
     for (let i = 0; i < n; i++) mean += frames[i][p];
@@ -86,43 +88,118 @@ export function correlateCode(frames, code) {
     }
     r[p] = den > 1e-9 ? num / (Math.sqrt(den) * cNorm) : 0;
     amp[p] = on / ones - off / zeros;
+    sd[p] = Math.sqrt(den / n);
   }
-  return { r, amp };
+  return { r, amp, sd };
 }
 
 /**
- * Group matching pixels into blobs (4-connected flood fill) and keep only
- * small ones. A lens dot at a few metres covers 1 to a few dozen pixels at
- * 320 px wide. Anything bigger is a mirror, a window or a glossy surface.
+ * Shape test for one candidate spot. A lens glint is tiny, round and solid:
+ * it fills most of its outline and is about as wide as it is tall. The edge
+ * of a spoon or a glossy frame lights up as a thin streak instead: long (low
+ * aspect) or slanted (low fill). Below `shapeMinArea` pixels a spot is too
+ * small to have a shape, so it always passes.
+ *
+ * "Fill" is measured against the round outline (ellipse) that fits the
+ * bounding box, not the box itself: a perfectly round dot only covers π/4
+ * (79%) of its box, and a small pixelated one even less (6 pixels in a 3x3
+ * box). Against the ellipse a round dot scores about 1, a slanted streak
+ * well under 0.5.
  */
-export function findBlobs(r, amp, w, h, { rMin = 0.8, ampMin = 6, minArea = 1, maxArea = 40, raw = null } = {}) {
-  const hit = new Uint8Array(w * h);
-  for (let p = 0; p < hit.length; p++) hit[p] = r[p] >= rMin && amp[p] >= ampMin ? 1 : 0;
+export function shapeOk({ area, bw, bh }, { fillMin = 0.7, aspectMin = 0.6, shapeMinArea = 6 } = {}) {
+  if (area < shapeMinArea) return true;
+  const fill = Math.min(1, area / ((Math.PI / 4) * bw * bh));
+  const aspect = Math.min(bw, bh) / Math.max(bw, bh);
+  return fill >= fillMin && aspect >= aspectMin;
+}
+
+/**
+ * Flood fill (8-connected, so a slanted streak stays one piece) over pixels
+ * where `test(p)` holds. Calls `each(stats)` with area, centre, bounding box,
+ * mean r and amp, and the peak of `raw`.
+ */
+function eachBlob(w, h, test, r, amp, raw, each) {
   const seen = new Uint8Array(w * h);
-  const blobs = [];
   const stack = [];
-  for (let start = 0; start < hit.length; start++) {
-    if (!hit[start] || seen[start]) continue;
+  for (let start = 0; start < w * h; start++) {
+    if (seen[start] || !test(start)) continue;
     let area = 0, sx = 0, sy = 0, sr = 0, sa = 0, peak = -Infinity;
+    let x0 = w, x1 = 0, y0 = h, y1 = 0;
     stack.push(start); seen[start] = 1;
     while (stack.length) {
       const p = stack.pop();
       const x = p % w, y = (p / w) | 0;
       area++; sx += x; sy += y; sr += r[p]; sa += amp[p];
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
       if (raw && raw[p] > peak) peak = raw[p];
-      const nb = [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, y > 0 ? p - w : -1, y < h - 1 ? p + w : -1];
-      for (const q of nb) if (q >= 0 && hit[q] && !seen[q]) { seen[q] = 1; stack.push(q); }
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if ((dx || dy) && nx >= 0 && ny >= 0 && nx < w && ny < h) {
+          const q = ny * w + nx;
+          if (!seen[q] && test(q)) { seen[q] = 1; stack.push(q); }
+        }
+      }
     }
-    if (area < minArea || area > maxArea) continue;
-    if (raw && !isIsolated(raw, w, h, sx / area, sy / area, peak)) continue;
-    const meanR = sr / area;
+    each({ area, x: sx / area, y: sy / area, bw: x1 - x0 + 1, bh: y1 - y0 + 1, r: sr / area, amp: sa / area, peak });
+  }
+}
+
+/**
+ * Group matching pixels into blobs and keep only small, round ones. A lens
+ * dot at a few metres covers 1 to a few dozen pixels at 320 px wide.
+ * Anything bigger is a mirror, a window or a glossy surface; anything long
+ * or slanted is a streak along an edge (see shapeOk).
+ *
+ * If `rejects` (an array) is given, spots that were dropped are added to it
+ * with a reason, so the user can see what was ignored:
+ *   'shape' - followed the flash but is a streak, a patch or part of a bigger shiny area
+ *   'flash' - something small that changed during the scan, but not in our pattern
+ * (`sd` from correlateCode is needed for 'flash').
+ */
+export function findBlobs(r, amp, w, h, {
+  rMin = 0.8, ampMin = 6, minArea = 1, maxArea = 40, fillMin = 0.7, aspectMin = 0.6, shapeMinArea = 6,
+  raw = null, sd = null, rejects = null,
+} = {}) {
+  const hit = new Uint8Array(w * h);
+  for (let p = 0; p < hit.length; p++) hit[p] = r[p] >= rMin && amp[p] >= ampMin ? 1 : 0;
+  const blobs = [];
+  eachBlob(w, h, (p) => hit[p], r, amp, raw, (b) => {
+    if (b.area < minArea) return;
+    const reject = () => { if (rejects && b.area <= maxArea * 4) rejects.push({ x: b.x, y: b.y, area: b.area, bw: b.bw, bh: b.bh, reason: 'shape' }); };
+    if (b.area > maxArea || !shapeOk(b, { fillMin, aspectMin, shapeMinArea })) return reject();
+    if (raw && !isIsolated(raw, w, h, b.x, b.y, b.peak)) return reject();
     blobs.push({
-      x: sx / area, y: sy / area, area, r: meanR, amp: sa / area,
+      x: b.x, y: b.y, area: b.area, r: b.r, amp: b.amp,
       // Score 0..100: mostly how well it follows the code, a little for how strong the blink is.
-      score: Math.round(100 * Math.min(1, meanR * (0.85 + 0.15 * Math.min(1, sa / area / 40)))),
+      score: Math.round(100 * Math.min(1, b.r * (0.85 + 0.15 * Math.min(1, b.amp / 40)))),
+    });
+  });
+  if (rejects && sd) {
+    // Small dots that clearly changed but did not follow the pattern (a
+    // standby light on its own timer). A strong change and a dot-like shape
+    // are both required, so sensor noise and edges moving with the hand are
+    // not shown.
+    eachBlob(w, h, (p) => !hit[p] && sd[p] >= 2 * ampMin && r[p] < rMin * 0.5, r, amp, null, (b) => {
+      if (b.area >= 2 && b.area <= 12 && b.bw <= 5 && b.bh <= 5 && shapeOk(b, { fillMin, aspectMin, shapeMinArea })) {
+        rejects.push({ x: b.x, y: b.y, area: b.area, reason: 'flash' });
+      }
     });
   }
   return blobs.sort((a, b) => b.score - a.score);
+}
+
+/**
+ * One ignored spot per thing: pieces of the same streak (within `dist`
+ * analysis pixels of each other) are merged into the biggest piece, which
+ * keeps its reason.
+ */
+export function mergeRejects(rejects, dist = 12) {
+  const out = [];
+  for (const r of [...rejects].sort((a, b) => b.area - a.area)) {
+    const near = out.find((o) => Math.hypot(o.x - r.x, o.y - r.y) < dist);
+    if (near) near.area += r.area; else out.push({ ...r });
+  }
+  return out;
 }
 
 /**
@@ -197,6 +274,9 @@ export const LENS_DEFAULTS = {
   rMin: 0.8,       // how closely a pixel must follow the code (correlation)
   ampMin: 6,       // smallest blink that counts, in grey levels
   maxArea: 40,     // biggest dot, in analysis pixels; bigger is a mirror or glossy surface
+  fillMin: 0.7,    // a lens glint fills most of its bounding box; a slanted streak does not
+  aspectMin: 0.6,  // and is about as wide as it is tall; the edge of a spoon is long and thin
+  showIgnored: 0,  // 1 = draw the spots that were ignored, with the reason
   trackDist: 0.12, // how far a spot may move between scans, as a share of picture width
   calibrated: false, // set once the torch timing has been measured on this phone
 };

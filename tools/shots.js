@@ -70,6 +70,12 @@ for (const scheme of ['light', 'dark']) {
       }
       await shot('lens-found');
       await sheet('#detailsBtn', 'lens-details');
+      await page.click('#detailsBtn');
+      await page.waitForTimeout(400);
+      await page.click('#ignoredToggle');
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(400);
+      await shot('lens-ignored');
       await sheet('#supportBtn', 'lens-phone');
       await page.click('#saveBtn');
       await page.goto(base + '/lens.html');

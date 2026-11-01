@@ -66,6 +66,8 @@ await step('lens check (demo) finds the simulated lens, seen twice, and saves it
   await page.click('#detailsBtn');
   await page.waitForTimeout(350);
   assert.match(await text('#debugInfo'), /frames per bit/);
+  assert.match(await text('#debugInfo'), /ignored [1-9]/); // the demo spoon is ignored for its shape
+  await page.click('#ignoredToggle');
   assert.match(await text('#debugInfo'), /torch timing: \d+ ms to switch/); // calibration ran
   console.log('      ' + (await text('#debugInfo')).replace(/\n/g, ' | '));
   await page.keyboard.press('Escape');

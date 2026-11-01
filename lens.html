@@ -48,6 +48,10 @@
   <aside id="details" class="sheet" hidden aria-label="Details">
     <span class="grabber"></span>
     <div class="sheet-head"><span></span><h3>Details</h3><button class="text-btn" data-close>Done</button></div>
+    <ul class="group">
+      <li><label class="row"><span class="row-text">Show ignored reflections</span><input type="checkbox" class="switch" id="ignoredToggle"></label></li>
+    </ul>
+    <p class="footer">Spots the check ignored get a small grey circle with the reason: wrong shape, or not following the flash.</p>
     <div class="label">Last scan</div>
     <ul class="group"><li><div class="row"><span class="mono muted" id="debugInfo">No scan yet.</span></div></li></ul>
     <canvas id="heat" style="width:100%;border-radius:12px;margin-top:8px;image-rendering:pixelated" aria-label="Map of how closely each pixel followed the code"></canvas>

@@ -9,6 +9,9 @@
 - **Screen transitions** use the browser's own page-to-page transition (Chrome). Browsers without it simply switch pages.
 - **Sheets** (phone support, details, settings, confirm clear) slide up over a dimmed backdrop and close by swipe down, tapping outside, Done or Escape.
 - **Screenshots** moved out of the e2e run into `npm run shots` (every screen and sheet, light and dark, 390 and 360 wide). `npm run e2e` only checks behaviour now.
+- **Shape test (lens):** a spot must be round and solid to count. "Fill" is measured against the round outline that fits the spot's box (a round dot only covers 79% of its square box, and a small pixelated one less), threshold 0.7; width to height at least 0.6. Spots under 6 pixels are too small to have a shape and always pass. Grouping is now 8-connected, so a slanted streak stays one piece.
+- **Show ignored reflections** (Details, off by default): grey circles labelled "Wrong shape" or "Doesn't follow the flash". Pieces of one streak are merged into one circle; at most 6 shown.
+- **Demo room** now has a spoon edge that the lens check ignores, so the toggle can be shown on a laptop.
 - **Dates** show as "today, 8:49 AM" instead of the full date.
 
 ## 1 Nov: real app, real address

@@ -52,11 +52,13 @@ export function drawSpots(ctx, spots, map, style, unit = 1, now = 0) {
   const labelled = [];
   for (const s of spots.slice(0, 6)) {
     const [x, y, k] = map(s.x, s.y);
+    if (x < 0 || y < 0 || x > ctx.canvas.width || y > ctx.canvas.height) continue; // cropped off screen
     const age = s.born && now ? Math.min(1, (now - s.born) / 300) : 1;
     const grow = 1 - (1 - age) ** 3;
     ctx.globalAlpha = age;
-    const rad = Math.max(20 * unit, Math.sqrt(s.area) * k * 2) * (0.7 + 0.3 * grow);
-    const { color, text } = style(s);
+    const { color, text, small } = style(s);
+    const rad = (small ? 11 * unit : Math.max(20 * unit, Math.sqrt(s.area) * k * 2)) * (0.7 + 0.3 * grow);
+    ctx.lineWidth = (small ? 2 : 3) * unit;
     ctx.strokeStyle = color;
     ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.stroke();
     // One label per cluster: two lights side by side share a label.
