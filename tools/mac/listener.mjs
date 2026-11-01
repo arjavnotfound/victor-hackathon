@@ -1,4 +1,4 @@
-// VIGIL listener: lets the phone app run a Wi-Fi traffic scan.
+// CRCD listener: lets the phone app run a Wi-Fi traffic scan.
 //
 //   node tools/mac/listener.mjs          real scans (needs the Sniffer, see below)
 //   node tools/mac/listener.mjs --demo   simulated room, for trying the flow
@@ -198,4 +198,4 @@ const server = http.createServer(async (req, res) => {
 });
 
 function log(t) { console.log(`${new Date().toLocaleTimeString()}  ${t}`); }
-server.listen(PORT, '0.0.0.0', () => log(`VIGIL listener on port ${PORT}${DEMO ? ' (simulated room)' : ''}`));
+server.listen(PORT, '0.0.0.0', () => log(`CRCD listener on port ${PORT}${DEMO ? ' (simulated room)' : ''}`));

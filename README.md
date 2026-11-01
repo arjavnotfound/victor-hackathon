@@ -1,9 +1,9 @@
 <p align="center"><img src="public/icon.svg" width="72" alt=""></p>
 
-<h1 align="center">VIGIL</h1>
+<h1 align="center">CRCD</h1>
 
-<p align="center"><b>Visual and Infrared Guard against hidden Lenses.</b><br>
-Five checks that find hidden cameras with the phone in your pocket.</p>
+<p align="center"><b>Challenge-Response Camera Detection.</b><br>
+We do not look for hidden cameras. We send a secret pattern and see what answers.<br>Five checks, one phone.</p>
 
 <p align="center">
   <a href="https://arjavnotfound.github.io/victor-hackathon/"><b>Open on your phone</b></a> ·
@@ -102,7 +102,7 @@ Add `?demo=1` to any page to use a simulated room on a laptop. `npm run listener
 
 ```bash
 npm run android:setup   # once: Java and the Android SDK into ~/Android, no Android Studio, no sudo
-npm run apk             # builds VIGIL.apk
+npm run apk             # builds CRCD.apk
 ```
 
 The app is the same web code inside a small Android shell, plus a native plugin for the network check (`android/app/src/main/java/app/teamvictor/check/NetworkCheckPlugin.java`).

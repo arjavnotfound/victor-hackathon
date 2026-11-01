@@ -36,7 +36,7 @@ export function fillIcons(root = document) {
 }
 
 /**
- * The VIGIL mark: four long rays and four short ones around an empty
+ * The CRCD mark: four long rays and four short ones around an empty
  * middle, like light catching a lens. `cls` adds 'live' (turns slowly) or
  * 'draw' (rays draw in one after another).
  */

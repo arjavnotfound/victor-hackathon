@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">VIGIL</string>
-    <string name="title_activity_main">VIGIL</string>
+    <string name="app_name">CRCD</string>
+    <string name="title_activity_main">CRCD</string>
     <string name="package_name">app.teamvictor.check</string>
     <string name="custom_url_scheme">app.teamvictor.check</string>
 </resources>

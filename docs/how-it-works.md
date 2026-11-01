@@ -1,4 +1,4 @@
-# How VIGIL works
+# How CRCD works
 
 A short guide for the team. No maths needed.
 

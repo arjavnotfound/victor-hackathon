@@ -1,6 +1,6 @@
 {
   "appId": "app.teamvictor.check",
-  "appName": "VIGIL",
+  "appName": "CRCD",
   "webDir": "dist",
   "android": {
     "backgroundColor": "#000000",

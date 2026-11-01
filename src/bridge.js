@@ -1,8 +1,8 @@
-// Talks to the VIGIL listener, which runs the Wi-Fi traffic scans
+// Talks to the CRCD listener, which runs the Wi-Fi traffic scans
 // (tools/mac/listener.mjs). In the browser it is reached through the dev
 // server at /api; the Android app uses the address saved in Settings.
 
-const KEY = 'vigil.listener';
+const KEY = 'crcd.listener';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export function listenerBase() {
