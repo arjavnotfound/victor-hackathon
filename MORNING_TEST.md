@@ -97,6 +97,8 @@ None of these could be tested on the laptop. Try each once.
   2. Settings > System > Developer options.
   3. Find "Wi-Fi scan throttling" and turn it off.
   4. Go back to Find it. Readings should now update every second or two.
+- **Hindi.** Home > the ... button > Language > हिन्दी. The app reloads in Hindi. Check the Hindi letters look right (not boxes) on this phone, then switch back to English.
+- **Report sheet.** Results > Save report (PDF). Fill in place and name, tap Save PDF, and open the PDF on the phone. Check the photos and the header.
 
 ### 5. Save a report
 1. Tap **Next: results**. Check the "What was checked" list and the saved spot photos.

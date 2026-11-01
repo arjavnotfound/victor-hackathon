@@ -18,6 +18,14 @@ Lots of things in a room are shiny: screws, glossy stickers, glasses, the edge o
 
 We also only keep small dots. A lens dot is tiny. A big shiny area is a mirror, a window or a glossy surface.
 
+## Round and small: the shape test
+
+A lens is a small circle, so its reflection is a small round dot. Shine off a spoon, a tap or a picture frame edge is usually a long streak or a big patch. Each dot is measured: how much of its box it fills (a circle fills most of it, a slanted streak very little) and how close to square its box is. Dots that fail are ignored. In Details, "Show ignored reflections" draws them with a grey circle and the reason: "Wrong shape", or "Doesn't follow the flash" for a dot that is bright but does not blink with the torch.
+
+## Which way you pointed: the coverage ring
+
+While a scan runs, the phone's compass tells which way it is pointing. The circle around you is split into 12 slices. A slice fills in once you scanned in that direction. Results say "You checked 9 of 12 directions". This shows where you pointed the phone. It does not prove a direction is clear. Phones without a compass hide the ring.
+
 ## Why we check twice after moving
 
 A shiny screw reflects the torch only at one exact angle. Move the phone a little to the side and the reflection usually disappears. A lens keeps reflecting from many angles.
@@ -48,8 +56,20 @@ Between scans, the app compares each new picture with the last one to see how fa
 
 A web page is not allowed to look at Wi-Fi networks or other devices, so this check is only in the Android app. It does two things:
 
-- **Nearby Wi-Fi names.** Many cheap cameras make their own Wi-Fi network with a name like "IPC-1234" or "CAM_xxxx", or are made by companies that mostly make camera chips. Those names get listed.
+- **Nearby Wi-Fi names.** Many cheap cameras make their own Wi-Fi network with a default name: a short camera word plus the device's serial number, like "IPC-8F3A21". Our rules are strict and only match whole words, so names like "Airtel_Home" or "JioFiber-5G" are left alone. Networks whose Wi-Fi chip maker mostly makes chips for small cameras are listed too.
 - **Devices on your Wi-Fi.** The app knocks on every address on the Wi-Fi you joined and checks which ones answer on the doors cameras usually use (for example port 554 for video streams), answer a "are you a camera?" message that many cameras reply to, or show a camera login page.
+- **Does it stream video?** For a device with a video port open, the app sends the first question a video player sends. If the reply starts like a video stream's reply, that device "answers as a video stream", which is a strong sign.
+- **Announcements.** Devices often announce what they are on the local Wi-Fi so other devices can find them. The app listens for a short time. A device that announces itself as a camera is listed; TVs and media players are not.
+
+Every listed item comes with its reasons in plain words. There is no score. Both parts run at the same time and finish in about 15 seconds.
+
+## Find it
+
+A camera that runs its own hotspot sends out its network name all the time, and its signal gets stronger as you walk towards it. "Find it" reads that signal about once a second, averages the last few readings (the signal jumps around by a few units from reflections and your own body), and says "Warmer" or "Colder" only when the change is bigger than that jumping. The ring fills with signal strength, and the phone pulses faster as it gets stronger.
+
+Android limits how often an app may look at Wi-Fi networks. If readings come in slowly, the screen says so and explains how to turn off "Wi-Fi scan throttling" in Developer options.
+
+It cannot find a camera that has joined someone else's Wi-Fi, because then the camera does not send its own network name.
 
 It cannot see a camera on another Wi-Fi, on mobile data, or one that only records to a memory card. Some hostel and college Wi-Fi networks also hide devices from each other.
 

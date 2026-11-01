@@ -51,10 +51,11 @@ Looking by eye misses small lenses. And when someone does suspect a camera, ther
 Nothing is uploaded. There is no server and no account.
 
 <table><tr>
-<td><img src="docs/screenshots/home.png" width="190" alt="Home"></td>
-<td><img src="docs/screenshots/lens-found.png" width="190" alt="Lens check"></td>
-<td><img src="docs/screenshots/results-report.png" width="190" alt="Results"></td>
-<td><img src="docs/screenshots/dark-home.png" width="190" alt="Home in dark mode"></td>
+<td><img src="docs/screenshots/home-light-390.png" width="190" alt="Home"></td>
+<td><img src="docs/screenshots/lens-found-dark-390.png" width="190" alt="Lens check"></td>
+<td><img src="docs/screenshots/network-demo-light-390.png" width="190" alt="Network check"></td>
+<td><img src="docs/screenshots/find-dark-390.png" width="190" alt="Find it"></td>
+<td><img src="docs/screenshots/hi-home-light-390.png" width="190" alt="Home in Hindi"></td>
 </tr></table>
 
 ## How it works, in short
