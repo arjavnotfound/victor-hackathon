@@ -6,50 +6,63 @@
   <meta name="theme-color" content="#000000" />
   <link rel="icon" href="icon.svg" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <title>VICTOR · IR check</title>
-  <script type="module" crossorigin src="./assets/ir-CSN0BZgc.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/config-BEN-tLYE.js">
-  <link rel="modulepreload" crossorigin href="./assets/ui-TI05uVEd.js">
+  <title>VICTOR · Night-vision lights</title>
+  <script type="module" crossorigin src="./assets/ir-BtogcKjh.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/ui-DCiHzPIO.js">
   <link rel="modulepreload" crossorigin href="./assets/store-Clq8ImiC.js">
-  <link rel="modulepreload" crossorigin href="./assets/cam-page-BICgZUK4.js">
-  <link rel="stylesheet" crossorigin href="./assets/ui-DZxvSkRf.css">
+  <link rel="modulepreload" crossorigin href="./assets/coverage-CkpL5FMV.js">
+  <link rel="modulepreload" crossorigin href="./assets/cam-page-6Jvgc-c7.js">
+  <link rel="stylesheet" crossorigin href="./assets/app-tB7UwrZs.css">
 <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
 <body class="cam">
   <div id="stage">
     <video id="video" playsinline muted autoplay></video>
     <canvas id="overlay"></canvas>
   </div>
+  <div class="aim" aria-hidden="true"></div>
+  <div class="cover" id="cover" role="img" hidden></div>
 
   <header class="cam-top">
-    <a class="icon-btn" href="./" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
-    <span class="title">IR check</span>
-    <button class="icon-btn" id="supportBtn" aria-pressed="false" aria-controls="support">Phone</button>
-    <button class="icon-btn" id="detailsBtn" aria-pressed="false" aria-controls="details">Details</button>
+    <a class="icon-btn" href="./" aria-label="Home"><span data-icon="back"></span></a>
+    <span class="cam-title">Night-vision lights</span>
+    <span class="nav-end">
+      <button class="icon-btn" id="flipBtn" disabled aria-label="Use front camera"><span data-icon="flip"></span></button>
+      <button class="icon-btn" id="supportBtn" data-sheet="support" aria-pressed="false" aria-label="What this phone supports"><span data-icon="info"></span></button>
+      <button class="icon-btn" id="detailsBtn" data-sheet="details" aria-pressed="false" aria-label="Details"><span data-icon="sliders"></span></button>
+    </span>
   </header>
 
-  <p id="status" class="cam-status" role="status" aria-live="polite">Turn off the room lights. Then slowly point the camera around the room.</p>
+  <p class="cam-status"><span id="status" role="status" aria-live="polite">Turn off the room lights. Then slowly point the camera around the room.</span>
+    <span class="cam-hint" id="hint">Night-vision lights are invisible to your eyes but often show up on a phone camera as a white or purple dot.</span></p>
 
   <div class="cam-bottom">
-    <p class="cam-foot">Night-vision lights are invisible to your eyes but often show up on a phone camera as a white or purple dot. Not every camera has them, and phones differ.</p>
     <button id="scanBtn" class="shutter">Start camera</button>
     <div class="cam-row">
-      <button id="flipBtn" class="ghost" disabled>Use front camera</button>
-      <button id="saveBtn" class="ghost" disabled>Save this spot</button>
+      <button id="saveBtn" class="text-btn" disabled>Save this spot</button>
+      <a id="nextBtn" class="text-btn" href="results.html">Next: results</a>
     </div>
-    <a id="nextBtn" class="ghost" style="flex:none;width:100%;max-width:380px" href="results.html">Next: results</a>
     <p id="saved" class="cam-foot"></p>
   </div>
 
-  <aside id="support" class="sheet" hidden>
-    <h3>What this phone supports</h3>
-    <table id="supportTable"><tr><td>Start the camera first.</td></tr></table>
+  <aside id="support" class="sheet" hidden aria-label="What this phone supports">
+    <span class="grabber"></span>
+    <div class="sheet-head"><span></span><h3>This phone</h3><button class="text-btn" data-close>Done</button></div>
+    <ul class="group" id="supportTable"><li><div class="row"><span class="row-text muted">Start the camera first.</span></div></li></ul>
+    <p class="footer">Many phones see more infrared with the front camera. Try both.</p>
   </aside>
 
-  <aside id="details" class="sheet" hidden>
-    <h3>Details</h3>
-    <div class="mono" id="debugInfo">No scan yet.</div>
+  <aside id="details" class="sheet" hidden aria-label="Details">
+    <span class="grabber"></span>
+    <div class="sheet-head"><span></span><h3>Details</h3><button class="text-btn" data-close>Done</button></div>
+    <div class="label">Live</div>
+    <ul class="group"><li><div class="row"><span class="mono muted" id="debugInfo">Not running.</span></div></li></ul>
+    <div class="label">Tuning</div>
     <div id="sliders"></div>
-    <button class="ghost" id="clearBtn" type="button">Forget the dots found so far</button>
+    <p class="footer">Changes are kept on this phone.</p>
+    <div class="label">Actions</div>
+    <ul class="group">
+      <li><button class="row" id="clearBtn" type="button"><span class="row-text" style="color:var(--accent)">Forget the dots found so far</span></button></li>
+    </ul>
   </aside>
 
 </body>

@@ -8,28 +8,33 @@
   <link rel="icon" href="icon.svg" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <title>VICTOR · Results</title>
-  <style>.summary{letter-spacing:-.02em;margin:4px 0 8px;font-size:22px;font-weight:600;line-height:1.3}.spot img{border-radius:8px;width:100%;margin-bottom:8px;display:block}.actions{margin-top:28px}</style>
-  <script type="module" crossorigin src="./assets/results-D2RB1oOw.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/config-BEN-tLYE.js">
-  <link rel="modulepreload" crossorigin href="./assets/ui-TI05uVEd.js">
+  <style>.summary{text-align:center;flex-direction:column;align-items:center;gap:10px;padding:24px 16px 20px;display:flex}.badge{background:var(--ok-soft);width:56px;height:56px;color:var(--ok);border-radius:50%;place-items:center;display:grid}.badge.warn{background:var(--warn-soft);color:var(--warn)}.badge.grey{background:var(--fill);color:var(--muted)}.badge svg{width:30px;height:30px}.badge path,.badge circle{stroke-dasharray:80;stroke-dashoffset:80px;animation:draw .5s .15s var(--ease) forwards}@keyframes draw{to{stroke-dashoffset:0}}@media (prefers-reduced-motion:reduce){.badge path,.badge circle{stroke-dashoffset:0}}.summary .title,.summary p{margin:0}.thumb{object-fit:cover;background:var(--fill);border-radius:6px;flex:none;width:64px;height:48px}.spot .row{align-items:center}.hash{font-family:var(--mono);word-break:break-all;color:var(--muted);font-size:12px}</style>
+  <script type="module" crossorigin src="./assets/results-D5-pRmas.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/ui-DCiHzPIO.js">
   <link rel="modulepreload" crossorigin href="./assets/store-Clq8ImiC.js">
-  <link rel="modulepreload" crossorigin href="./assets/preload-helper-wUDNLMAe.js">
+  <link rel="modulepreload" crossorigin href="./assets/coverage-CkpL5FMV.js">
+  <link rel="modulepreload" crossorigin href="./assets/report-content-BwjYlJdS.js">
   <link rel="modulepreload" crossorigin href="./assets/code-Dygr-lMv.js">
-  <link rel="modulepreload" crossorigin href="./assets/report-2Hzr-9XX.js">
-  <link rel="stylesheet" crossorigin href="./assets/ui-DZxvSkRf.css">
+  <link rel="modulepreload" crossorigin href="./assets/report-BREmng-x.js">
+  <link rel="stylesheet" crossorigin href="./assets/app-tB7UwrZs.css">
 <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
 <body>
-  <main class="page">
-    <div class="topbar"><a class="back" href="./"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Home</a><span class="brand" data-app-name>VICTOR</span></div>
-    <h1>Results</h1>
-    <p id="summary" class="summary"></p>
-    <p id="limits" class="muted small"></p>
+  <header class="nav"><a class="back" href="./"><span data-icon="back"></span>Home</a><span class="nav-title">Results</span><span class="nav-end"></span></header>
+  <main class="page has-bar">
+    <h1 class="large">Results</h1>
 
-    <div class="label">What was checked</div>
+    <ul class="group"><li class="summary" id="summaryBox">
+      <span class="badge" id="badge"></span>
+      <h2 class="title" id="summary"></h2>
+      <p class="small muted" id="summarySub"></p>
+    </li></ul>
+
+    <div class="label">Checks on this phone</div>
     <ul id="checks" class="group"></ul>
+    <p class="footer" id="coverNote" hidden>Directions covered shows where you pointed the phone during scans, not proof that a direction is clear.</p>
 
     <section id="spotsSec" hidden>
-      <div class="label">Spots worth a closer look</div>
+      <div class="label">Saved spots</div>
       <ul id="spots" class="group"></ul>
     </section>
 
@@ -37,14 +42,47 @@
       <div class="label">From the network check</div>
       <ul id="netList" class="group"></ul>
     </section>
+    <p class="footer" id="limits"></p>
 
-    <div class="actions">
-      <button id="reportBtn" class="btn primary">Save report (PDF)</button>
-      <p id="reportNote" class="muted small" hidden></p>
-      <a class="btn" href="help.html">If you found something</a>
-      <a id="againBtn" class="btn" href="lens.html">Check again</a>
-      <button id="clearBtn" class="link-btn" type="button">Clear results and start fresh</button>
-    </div>
+    <section id="reportSec" hidden>
+      <div class="label">Last saved report</div>
+      <ul class="group"><li class="row"><span class="ico ok" data-icon="doc"></span><span class="row-text"><span id="reportName"></span><span class="hash" id="reportHash"></span></span></li></ul>
+      <p class="footer">This fingerprint is printed inside the PDF. If the report is changed later, it will no longer match.</p>
+    </section>
+
+    <div class="label">Next</div>
+    <ul class="group">
+      <li><a class="row" href="help.html"><span class="ico warn" data-icon="alert"></span><span class="row-text">If you found something</span><span class="chev" data-icon="chev"></span></a></li>
+      <li><a class="row" id="againBtn" href="lens.html"><span class="ico" data-icon="lens"></span><span class="row-text">Check another area</span><span class="chev" data-icon="chev"></span></a></li>
+    </ul>
+    <div class="center"><button id="clearBtn" class="text-btn danger" type="button" data-sheet="confirmClear">Clear results</button></div>
   </main>
+
+  <div class="bottom-bar">
+    <button id="reportBtn" class="btn primary" data-sheet="aboutSheet"><span data-icon="share"></span>Save report (PDF)</button>
+    <p id="reportNote" class="caption" role="status" hidden></p>
+  </div>
+
+  <aside id="aboutSheet" class="sheet" hidden aria-label="Report details">
+    <span class="grabber"></span>
+    <div class="sheet-head"><button class="text-btn" data-close>Cancel</button><h3>Report</h3><span></span></div>
+    <p class="footer" style="margin-top:0">All optional. These go at the top of the PDF.</p>
+    <ul class="group">
+      <li><label class="field"><span>Place and room</span><input id="aboutPlace" autocomplete="off" placeholder="Hostel block B, room 204"></label></li>
+      <li><label class="field"><span>Your name</span><input id="aboutName" autocomplete="name" placeholder="Name"></label></li>
+      <li><label class="field"><span>Notes</span><textarea id="aboutNotes" rows="3" placeholder="Anything you want on record"></textarea></label></li>
+    </ul>
+    <button class="btn primary" id="makePdf" type="button">Save PDF</button>
+  </aside>
+
+  <aside id="confirmClear" class="sheet" hidden aria-label="Clear results">
+    <span class="grabber"></span>
+    <div class="state">
+      <p>Remove the saved spots and the list of checks from this phone?</p>
+      <button class="btn primary" id="clearYes" style="background:var(--bad);color:#fff">Clear results</button>
+      <div class="center"><button class="text-btn" data-close>Cancel</button></div>
+    </div>
+  </aside>
+
 </body>
 </html>

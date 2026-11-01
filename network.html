@@ -7,37 +7,58 @@
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="icon.svg" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <title>VICTOR · Network check</title>
-  <script type="module" crossorigin src="./assets/network-BUh8Mg23.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/config-BEN-tLYE.js">
-  <link rel="modulepreload" crossorigin href="./assets/ui-TI05uVEd.js">
+  <title>VICTOR · Network</title>
+  <style>.counts{grid-template-columns:1fr 1fr;display:grid}.counts>li{padding:14px 16px}.counts>li+li:before{display:none}.counts>li+li{border-left:.5px solid var(--line)}.counts b{font-variant-numeric:tabular-nums;letter-spacing:-.02em;font-size:28px;font-weight:600;display:block}.counts span{color:var(--muted);font-size:13px}.why{color:var(--muted);margin:4px 0 0;padding:0;font-size:15px;list-style:none}.why li:before{content:"·";margin-right:6px}.find{width:auto;min-height:34px;margin-top:10px;padding:6px 16px;font-size:15px;display:inline-flex}.spin{border:2px solid var(--fill);border-top-color:var(--accent);border-radius:50%;flex:none;width:18px;height:18px;animation:.8s linear infinite spin}@keyframes spin{to{transform:rotate(360deg)}}.bar{background:var(--fill);border-radius:2px;height:3px;margin:0 16px 10px;overflow:hidden}.bar i{background:var(--accent);width:0;height:100%;transition:width .3s linear;display:block}.find{align-self:flex-start;min-height:32px;margin-top:6px;padding:0;font-size:15px;font-weight:500}</style>
+  <script type="module" crossorigin src="./assets/network-xPagUywW.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/ui-DCiHzPIO.js">
+  <link rel="modulepreload" crossorigin href="./assets/dist-CMedSjkm.js">
   <link rel="modulepreload" crossorigin href="./assets/store-Clq8ImiC.js">
-  <link rel="stylesheet" crossorigin href="./assets/ui-DZxvSkRf.css">
+  <link rel="stylesheet" crossorigin href="./assets/app-tB7UwrZs.css">
 <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
 <body>
-  <main class="page">
-    <div class="topbar"><a class="back" href="./"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Home</a><span class="brand" data-app-name>VICTOR</span></div>
-    <h1>Network check</h1>
-    <p class="muted">Looks at Wi-Fi networks around you, and at devices on the Wi-Fi you joined, for ones that behave like cameras.</p>
+  <header class="nav"><a class="back" href="./"><span data-icon="back"></span>Home</a><span class="nav-title">Network</span><span class="nav-end"></span></header>
+  <main class="page has-bar">
+    <h1 class="large">Network</h1>
+    <p class="lede">Looks at Wi-Fi networks around you, and at devices on the Wi-Fi you joined, for ones that behave like cameras.</p>
 
-    <div id="webOnly" class="note" hidden>
-      <p><b>This check needs the VICTOR Android app.</b> Web pages are not allowed to look at Wi-Fi networks or other devices.</p>
-      <a class="btn primary" href="https://github.com/arjavnotfound/victor-hackathon/releases/latest">Get the Android app</a>
-    </div>
+    <section id="webOnly" hidden>
+      <ul class="group"><li class="state">
+        <span class="ico grey" data-icon="phone"></span>
+        <h3>Needs the Android app</h3>
+        <p>Web pages are not allowed to look at Wi-Fi networks or other devices. The lens and night-vision checks work here.</p>
+      </li></ul>
+    </section>
 
-    <div id="appOnly" hidden>
-      <button id="runBtn" class="btn primary">Check the network</button>
-      <p id="status" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p>
+    <section id="appOnly" hidden>
+      <ul class="group" id="progressBox" hidden>
+        <li class="row"><span class="spin"></span><span class="row-text" id="status" role="status" aria-live="polite"></span></li>
+        <li><div class="bar"><i id="bar"></i></div></li>
+      </ul>
 
       <section id="found" hidden>
-        <h2 id="foundTitle"></h2>
+        <ul class="group counts">
+          <li><b id="nNearby">0</b><span>nearby networks</span></li>
+          <li><b id="nDevices">0</b><span>devices on this Wi-Fi</span></li>
+        </ul>
+        <div class="label" id="foundTitle"></div>
         <ul id="foundList" class="group"></ul>
+        <p class="footer" id="notes"></p>
       </section>
-      <p id="counts" class="muted small"></p>
-      <p class="muted small">Some Wi-Fi networks keep devices hidden from each other, and cameras can use mobile data or record to a memory card. An empty list does not prove a room is clear.</p>
-    </div>
 
-    <a class="btn" style="margin-top:28px" href="results.html">See results</a>
+      <ul class="group" id="idle">
+        <li class="state">
+          <span class="ico" data-icon="wifi"></span>
+          <h3>Check this Wi-Fi and the air around you</h3>
+          <p>Join the room's Wi-Fi first if you can. Android will ask for location, which it needs to list nearby networks.</p>
+        </li>
+      </ul>
+      <p class="footer">Some Wi-Fi networks keep devices hidden from each other, and cameras can use mobile data or record to a memory card. An empty list does not prove a room is clear.</p>
+    </section>
   </main>
+
+  <div class="bottom-bar">
+    <button id="runBtn" class="btn primary" hidden>Check the network</button>
+    <a id="getApp" class="btn primary" href="https://github.com/arjavnotfound/victor-hackathon/releases/latest" hidden>Get the Android app</a>
+  </div>
 </body>
 </html>

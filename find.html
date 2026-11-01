@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="icon.svg" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <title>VICTOR · Find it</title>
+  <style>.dial{aspect-ratio:1;width:min(72vw,280px);margin:16px auto 8px;position:relative}.dial svg{width:100%;height:100%;transform:rotate(-90deg)}.dial circle{fill:none;stroke-width:14px;stroke-linecap:round}.dial .track{stroke:var(--fill)}.dial .arc{stroke:var(--accent);transition:stroke-dashoffset .6s,stroke .3s}.dial.close .arc{stroke:var(--warn)}.dial-text{text-align:center;place-content:center;display:grid;position:absolute;inset:0}#word{letter-spacing:-.02em;font-size:32px;font-weight:700}#dbm{color:var(--muted);font-variant-numeric:tabular-nums;font-size:15px}@media (prefers-reduced-motion:reduce){.dial .arc{transition:none}}</style>
+  <script type="module" crossorigin src="./assets/find-CNXLjoPf.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/ui-DCiHzPIO.js">
+  <link rel="modulepreload" crossorigin href="./assets/dist-CMedSjkm.js">
+  <link rel="stylesheet" crossorigin href="./assets/app-tB7UwrZs.css">
+<link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
+<body>
+  <header class="nav"><a class="back" href="network.html"><span data-icon="back"></span>Network</a><span class="nav-title">Find it</span><span class="nav-end"></span></header>
+  <main class="page has-bar">
+    <h1 class="large">Find it</h1>
+    <p class="lede">Walk slowly around the room. The ring fills as you get closer to <b id="ssid"></b>.</p>
+
+    <div class="dial" id="dial" role="status" aria-live="polite">
+      <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="50"/><circle class="arc" id="arc" cx="60" cy="60" r="50" stroke-dasharray="314.16" stroke-dashoffset="314.16"/></svg>
+      <div class="dial-text"><span id="word">Searching</span><span id="dbm"></span></div>
+    </div>
+
+    <ul class="group" id="slow" hidden>
+      <li><div class="row" style="align-items:flex-start"><span class="ico warn" data-icon="info"></span><span class="row-text">Updates are slow on this phone. Turn off Wi-Fi scan throttling in Developer options for a faster finder.</span></div></li>
+    </ul>
+
+    <ul class="group">
+      <li><label class="row"><span class="row-text">Vibrate</span><input type="checkbox" class="switch" id="vibrate" checked></label></li>
+    </ul>
+    <p class="footer">The phone pulses faster as the signal gets stronger. Hold it in front of you and turn slowly: your body blocks some of the signal.</p>
+
+    <div class="label">Good to know</div>
+    <ul class="group"><li><div class="row"><span class="row-text">This works for a camera that runs its own Wi-Fi hotspot. It cannot find a camera that has joined someone else's Wi-Fi, because then it does not send its own network name.</span></div></li></ul>
+    <p class="footer">Wi-Fi signal bounces off walls, so it points you to an area, not an exact spot. Use the lens check there.</p>
+  </main>
+  <div class="bottom-bar"><a class="btn primary" href="lens.html">Check this area with the lens check</a></div>
+</body>
+</html>

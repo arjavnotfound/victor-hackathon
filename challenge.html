@@ -2,36 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="icon.svg" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <title>VICTOR · Wi-Fi check</title>
   <style>#flicker{z-index:50;color:#fff;background:#777;display:none;position:fixed;inset:0}#flicker.on{display:block}#flicker .info{text-align:center;mix-blend-mode:difference;font:500 14px system-ui;position:absolute;bottom:18px;left:0;right:0}#flicker .count{place-items:center;font:700 96px system-ui;display:grid;position:absolute;inset:0}#flicker .bar{mix-blend-mode:difference;background:#fff;height:4px;position:absolute;bottom:0;left:0}#flicker .skip{color:#fff;z-index:2;background:#000a;border-color:#fff4;position:absolute;top:16px;right:16px}.step-n{color:var(--muted);margin-bottom:4px;font-size:13px}.drop{border:1.5px dashed var(--line);border-radius:var(--radius);text-align:center;cursor:pointer;color:var(--muted);padding:28px}.drop:hover,.drop.over{border-color:var(--muted);color:var(--text)}.verdict{letter-spacing:-.02em;font-size:28px;font-weight:700}.verdict.camera{color:var(--flag)}.verdict.maybe{color:var(--warn)}.verdict.no{color:var(--good)}.scorebar{display:none}tbody tr{cursor:pointer}tbody tr.sel td{color:var(--text);background:var(--panel)}.table-wrap{overflow-x:auto}.hash{word-break:break-all;background:var(--bg);border-radius:8px;padding:10px 12px;font-size:13px}.fields{grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;display:grid}@media (width<=520px){.fields{grid-template-columns:1fr}}ol{margin:10px 0;padding-left:20px}ol li{margin:4px 0;font-size:14px}#traffic,#rssi{width:100%;height:auto}#traffic{margin:16px 0 6px}</style>
-  <script type="module" crossorigin src="./assets/challenge-DaRkzEn0.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/config-BEN-tLYE.js">
+  <script type="module" crossorigin src="./assets/challenge-Co02VsTO.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/ui-DCiHzPIO.js">
   <link rel="modulepreload" crossorigin href="./assets/code-Dygr-lMv.js">
   <link rel="modulepreload" crossorigin href="./assets/store-Clq8ImiC.js">
-  <link rel="modulepreload" crossorigin href="./assets/preload-helper-wUDNLMAe.js">
-  <link rel="modulepreload" crossorigin href="./assets/report-2Hzr-9XX.js">
-  <link rel="stylesheet" crossorigin href="./assets/challenge-D94Kfxei.css">
+  <link rel="modulepreload" crossorigin href="./assets/coverage-CkpL5FMV.js">
+  <link rel="modulepreload" crossorigin href="./assets/report-content-BwjYlJdS.js">
+  <link rel="modulepreload" crossorigin href="./assets/report-BREmng-x.js">
+  <link rel="stylesheet" crossorigin href="./assets/challenge-DFZSvygX.css">
 <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
 <body>
-  <header class="top">
-    <a class="brand" href="./">VICTOR</a>
-    <nav><a href="./">Phone checks</a><a href="results.html">Results</a><a class="on" href="challenge.html">Wi-Fi check</a></nav>
-  </header>
+  <header class="nav wide"><a class="back" href="./"><span data-icon="back"></span>Home</a><span class="nav-title">Wi-Fi traffic</span><span class="nav-end"><a class="text-btn" href="results.html">Results</a></span></header>
 
   <main class="wrap">
-    <h1>Wi-Fi check</h1>
-    <p class="muted">Flash a secret pattern at the object. If it's a camera that streams, its Wi-Fi traffic will follow the pattern.</p>
+    <h1 class="large">Wi-Fi traffic</h1>
+    <p class="lede">Flash a secret pattern at the object. If a camera there is streaming, its Wi-Fi traffic rises and falls with the pattern.</p>
 
     <section class="card">
       <div class="step-n">Step 1</div>
       <h2>Flash the pattern</h2>
       <p class="muted small">Start the Mac Sniffer first, then point this screen at the object for about 25 seconds. The screen will flash.</p>
-      <div class="row"><button id="startBtn" class="big-btn">Start</button><span id="codeLine" class="mono small muted"></span></div>
+      <button id="startBtn" class="btn primary">Start the pattern</button><p id="codeLine" class="mono small muted" style="margin:8px 0 0"></p>
       <details>
         <summary>How to record Wi-Fi on the Mac</summary>
         <ol class="muted">
@@ -51,9 +49,7 @@
         <input id="fileIn" type="file" accept=".pcap,.pcapng,.cap" hidden />
       </div>
       <p id="progress" style="margin-top:12px"></p>
-      <div class="row small">
-        <button id="demoBtn">Try with sample data</button>
-      </div>
+      <button id="demoBtn" class="btn">Try with sample data</button>
       <details>
         <summary>Code and start time</summary>
         <p id="sessionNote" class="small muted" style="margin-top:8px"></p>
@@ -102,7 +98,7 @@
       <div class="step-n">Proof</div>
       <h2>Evidence report</h2>
       <p class="muted small">A PDF with the time, code, device, graphs and <span id="snapCount">0</span> lens snapshots.</p>
-      <button id="reportBtn" class="primary">Download PDF</button>
+      <button id="reportBtn" class="btn primary">Save report (PDF)</button>
       <div id="hashBox" hidden>
         <p class="small muted" style="margin-top:14px">SHA-256 of the PDF. Keep it: if the file is edited, it won't match.</p>
         <div id="hash" class="mono hash"></div>
