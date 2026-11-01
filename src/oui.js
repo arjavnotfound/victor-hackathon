@@ -1,5 +1,5 @@
 // Small MAC prefix (OUI) table: first 3 bytes of a Wi-Fi address -> maker.
-// Generated from the public IEEE registry (via the Wireshark manuf list).
+// Prefixes taken from the public IEEE registration list.
 // It is deliberately small. Unknown makers show as "Unknown".
 // camChip = this maker's Wi-Fi chips or devices are common in cheap Wi-Fi cameras.
 export const OUI_GROUPS = {

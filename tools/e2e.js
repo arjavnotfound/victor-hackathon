@@ -152,6 +152,16 @@ await step('network check in a browser points to the Android app', async () => {
   await shot('network');
 });
 
+await step('network demo finds the camera hotspot and the video stream, not the TV', async () => {
+  await page.goto(base + '/network.html?demo=1');
+  await page.click('#runBtn');
+  await page.waitForSelector('#found:not([hidden])', { timeout: 20000 });
+  const text = await page.locator('#foundList').innerText();
+  assert.match(text, /IPC-8F3A21[^]*default hotspot/);
+  assert.match(text, /Answers as a video stream/);
+  assert.doesNotMatch(text, /Living room TV/);
+});
+
 await step('laptop home shows a QR code for phones', async () => {
   const wide = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
   const p = await wide.newPage();

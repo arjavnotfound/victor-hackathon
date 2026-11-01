@@ -5,11 +5,12 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 import { summarize, ALL_PORTS } from './network.js';
 import { markCheck } from './store.js';
 import { icon } from './icons.js';
-import { $, esc, initPage, animateNumber, stagger } from './ui.js';
+import { $, esc, initPage, animateNumber, stagger, isDemo } from './ui.js';
+import { demoPlugin } from './net-demo.js';
 
 initPage('Network');
-const NetworkCheck = registerPlugin('NetworkCheck');
-const native = Capacitor.isNativePlatform();
+const NetworkCheck = isDemo ? demoPlugin : registerPlugin('NetworkCheck');
+const native = Capacitor.isNativePlatform() || isDemo;
 $('webOnly').hidden = native;
 $('getApp').hidden = native;
 $('appOnly').hidden = !native;
@@ -34,22 +35,18 @@ async function run() {
   let nearby = [], devices = [];
   const notes = [];
 
-  progress('Looking at Wi-Fi networks around you…', 0, 30, 4500);
-  try {
-    const r = await NetworkCheck.nearby();
-    nearby = r.networks;
-    if (!r.locationOn) notes.push('Location is off, so Android may hide nearby networks. Turn it on and check again.');
-  } catch (e) {
-    notes.push(e.message);
-  }
-
-  progress('Looking at devices on this Wi-Fi…', 30, 98, 10000);
-  try {
-    const r = await NetworkCheck.lan({ ports: ALL_PORTS });
-    devices = r.devices;
-  } catch (e) {
-    notes.push(e.message);
-  }
+  // Both scans run at the same time; the Android side sends a line for each
+  // step of the device scan, so the user sees what it is doing.
+  progress('Looking at Wi-Fi networks and devices around you…', 0, 95, 14000);
+  const sub = await NetworkCheck.addListener('progress', (e) => { $('status').textContent = e.text; });
+  const [near, lan] = await Promise.allSettled([NetworkCheck.nearby(), NetworkCheck.lan({ ports: ALL_PORTS })]);
+  sub.remove();
+  if (near.status === 'fulfilled') {
+    nearby = near.value.networks;
+    if (!near.value.locationOn) notes.push('Location is off, so Android may hide nearby networks. Turn it on and check again.');
+  } else notes.push(near.reason.message);
+  if (lan.status === 'fulfilled') devices = lan.value.devices;
+  else notes.push(lan.reason.message);
   clearInterval(barTimer);
 
   const sum = summarize({ nearby, devices });

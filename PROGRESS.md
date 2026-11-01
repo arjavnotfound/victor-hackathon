@@ -15,6 +15,9 @@
 - **Isolation test** now samples two rings (4 and 6 px) of 24 points instead of one ring of 12, so short pieces of a thin streak are no longer kept as dots.
 - **Coverage ring** (`src/coverage.js`): 12 slices of 30 degrees, filled while a lens or night-vision scan runs. Uses the absolute orientation event on Android (compass), else plain deviceorientation (how far the phone turned since the page opened, which is all the ring needs). Hidden until the phone gives a reading, so laptops and phones without the sensor never show it. Lens and night-vision share one ring. In demo mode the heading turns slowly so the ring can be shown on a laptop.
 - **Dates** show as "today, 8:49 AM" instead of the full date.
+- Network: devices with port 554/8554 open get a short RTSP OPTIONS request; a reply starting "RTSP/1.0" means "Answers as a video stream". The app also listens for local announcements (mDNS camera service types, one SSDP search) and reads their server/type lines; media servers and TVs are not flagged.
+- Network names: our own strict rules (camera word as a whole word, or a camera prefix plus a hex serial, or a short model code plus a hex serial). Brand-name lists were removed. Ordinary names like "Airtel_Home", "JioFiber-5G" and "Campus WiFi" are tested to stay unflagged.
+- Network reasons are plain sentences, no scores. Nearby and device scans run at the same time with progress lines from the Android side, aimed at under 15 s. `network.html?demo=1` uses made-up data so the screen can be shown on a laptop.
 
 ## 1 Nov: real app, real address
 

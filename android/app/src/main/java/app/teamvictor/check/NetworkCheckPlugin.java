@@ -7,6 +7,8 @@ import android.net.ConnectivityManager;
 import android.net.LinkAddress;
 import android.net.LinkProperties;
 import android.net.Network;
+import android.net.nsd.NsdManager;
+import android.net.nsd.NsdServiceInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -23,7 +25,10 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.HttpURLConnection;
@@ -43,7 +48,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,8 +62,13 @@ import java.util.regex.Pattern;
  *   Android only shares these with apps that have location permission.
  * lan({ ports }): devices on the Wi-Fi the phone has joined. For each address
  *   in the local /24 range we try the given TCP ports, send the standard
- *   camera discovery message (ONVIF WS-Discovery), and read the title of any
- *   small web page a device serves.
+ *   camera discovery message (ONVIF WS-Discovery), listen for devices that
+ *   announce their services (mDNS through NsdManager, and SSDP), ask any
+ *   device with a video port whether it really serves a video stream (RTSP
+ *   OPTIONS), and read the title of any small web page a device serves.
+ *   Sends "progress" events with a plain line about what it is doing.
+ * signal({ bssid }): the current signal strength of one nearby network
+ *   (for the Find it screen), and how old that reading is.
  */
 @CapacitorPlugin(
     name = "NetworkCheck",
@@ -64,7 +76,7 @@ import java.util.regex.Pattern;
 )
 public class NetworkCheckPlugin extends Plugin {
 
-    private static final int CONNECT_TIMEOUT_MS = 400;
+    private static final int CONNECT_TIMEOUT_MS = 300;
     private static final int[] WEB_PORTS = { 80, 81, 8080 };
 
     // ---------- nearby Wi-Fi networks ----------
@@ -171,10 +183,37 @@ public class NetworkCheckPlugin extends Plugin {
                 }));
             }
         }
+        progress("Knocking on every address on this Wi-Fi…");
+        // Listen for announcements while the ports are being tried.
+        Map<String, Set<String>> mdns = new ConcurrentHashMap<>();
+        Map<String, Set<String>> ssdp = new ConcurrentHashMap<>();
+        Thread listen = new Thread(() -> {
+            Thread m = new Thread(() -> mdnsBrowse(mdns));
+            m.start();
+            ssdpSearch(ssdp);
+            try { m.join(); } catch (InterruptedException ignored) { }
+        });
+        listen.start();
         Set<String> onvif = onvifProbe();
         for (Future<?> j : jobs) {
             try { j.get(); } catch (Exception ignored) { }
         }
+        try { listen.join(); } catch (InterruptedException ignored) { }
+
+        // Does a device with a video port really answer as a video stream?
+        progress("Asking video ports whether they stream…");
+        Set<String> rtsp = ConcurrentHashMap.newKeySet();
+        List<Future<?>> rtspJobs = new ArrayList<>();
+        for (Map.Entry<String, Set<Integer>> e : open.entrySet()) {
+            for (int port : new int[] { 554, 8554 }) {
+                if (!e.getValue().contains(port)) continue;
+                rtspJobs.add(pool.submit(() -> { if (rtspAnswers(e.getKey(), port)) rtsp.add(e.getKey()); }));
+            }
+        }
+        for (Future<?> j : rtspJobs) {
+            try { j.get(); } catch (Exception ignored) { }
+        }
+        progress("Reading device names…");
 
         // Read the title of small web pages (a phone webcam app shows "IP Webcam").
         Map<String, String> web = new ConcurrentHashMap<>();
@@ -197,6 +236,8 @@ public class NetworkCheckPlugin extends Plugin {
         Map<String, JSObject> devices = new TreeMap<>();
         for (Map.Entry<String, Set<Integer>> e : open.entrySet()) devices.put(e.getKey(), device(e.getKey()));
         for (String ip : onvif) if (ip.startsWith(base)) devices.computeIfAbsent(ip, this::device);
+        for (String ip : mdns.keySet()) if (ip.startsWith(base)) devices.computeIfAbsent(ip, this::device);
+        for (String ip : ssdp.keySet()) if (ip.startsWith(base)) devices.computeIfAbsent(ip, this::device);
         JSArray list = new JSArray();
         for (Map.Entry<String, JSObject> e : devices.entrySet()) {
             String ip = e.getKey();
@@ -206,6 +247,9 @@ public class NetworkCheckPlugin extends Plugin {
             d.put("ports", p);
             d.put("onvif", onvif.contains(ip));
             d.put("web", web.getOrDefault(ip, ""));
+            d.put("rtsp", rtsp.contains(ip));
+            d.put("mdns", String.join(" ", mdns.getOrDefault(ip, Set.of())));
+            d.put("ssdp", String.join(" | ", ssdp.getOrDefault(ip, Set.of())));
             list.put(d);
         }
         JSObject ret = new JSObject();
@@ -258,6 +302,121 @@ public class NetworkCheckPlugin extends Plugin {
             return null;
         } finally {
             if (c != null) c.disconnect();
+        }
+    }
+
+    private void progress(String text) {
+        JSObject o = new JSObject();
+        o.put("text", text);
+        notifyListeners("progress", o);
+    }
+
+    /**
+     * Minimal RTSP request. A live video server answers "RTSP/1.0 200 OK" (or
+     * 401 if it wants a password); anything that answers "RTSP/1.0" at all is
+     * serving video streams. Waits at most 1 second.
+     */
+    private boolean rtspAnswers(String ip, int port) {
+        try (Socket s = new Socket()) {
+            s.connect(new InetSocketAddress(ip, port), 600);
+            s.setSoTimeout(1000);
+            OutputStream out = s.getOutputStream();
+            out.write(("OPTIONS rtsp://" + ip + ":" + port + "/ RTSP/1.0\r\nCSeq: 1\r\nUser-Agent: VICTOR\r\n\r\n").getBytes(StandardCharsets.US_ASCII));
+            out.flush();
+            String first = new BufferedReader(new InputStreamReader(s.getInputStream(), StandardCharsets.US_ASCII)).readLine();
+            return first != null && first.startsWith("RTSP/1.0");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Devices that announce services on this Wi-Fi (mDNS / Bonjour), through
+     * Android's NsdManager. We look for video stream and camera control
+     * services, listen for 3 seconds, then resolve each one to an address.
+     * Result: ip -> set of service types seen.
+     */
+    private void mdnsBrowse(Map<String, Set<String>> found) {
+        NsdManager nsd = (NsdManager) getContext().getSystemService(Context.NSD_SERVICE);
+        if (nsd == null) return;
+        String[] types = { "_rtsp._tcp", "_onvif._tcp", "_camera._tcp" };
+        List<NsdServiceInfo> services = java.util.Collections.synchronizedList(new ArrayList<>());
+        List<NsdManager.DiscoveryListener> listeners = new ArrayList<>();
+        for (String type : types) {
+            NsdManager.DiscoveryListener l = new NsdManager.DiscoveryListener() {
+                public void onDiscoveryStarted(String t) { }
+                public void onDiscoveryStopped(String t) { }
+                public void onStartDiscoveryFailed(String t, int c) { }
+                public void onStopDiscoveryFailed(String t, int c) { }
+                public void onServiceFound(NsdServiceInfo info) { services.add(info); }
+                public void onServiceLost(NsdServiceInfo info) { }
+            };
+            try {
+                nsd.discoverServices(type, NsdManager.PROTOCOL_DNS_SD, l);
+                listeners.add(l);
+            } catch (Exception ignored) { }
+        }
+        try { Thread.sleep(3000); } catch (InterruptedException ignored) { }
+        for (NsdManager.DiscoveryListener l : listeners) {
+            try { nsd.stopServiceDiscovery(l); } catch (Exception ignored) { }
+        }
+        // Older Android resolves one service at a time, so resolve in turn, 1 s each at most.
+        synchronized (services) {
+            for (NsdServiceInfo info : new ArrayList<>(services).subList(0, Math.min(services.size(), 6))) {
+                CountDownLatch done = new CountDownLatch(1);
+                try {
+                    nsd.resolveService(info, new NsdManager.ResolveListener() {
+                        public void onResolveFailed(NsdServiceInfo i, int c) { done.countDown(); }
+                        public void onServiceResolved(NsdServiceInfo i) {
+                            if (i.getHost() != null) {
+                                String type = i.getServiceType().replaceAll("^\\.|\\.$", "");
+                                found.computeIfAbsent(i.getHost().getHostAddress(), k -> ConcurrentHashMap.newKeySet()).add(type);
+                            }
+                            done.countDown();
+                        }
+                    });
+                    done.await(1, TimeUnit.SECONDS);
+                } catch (Exception ignored) { }
+            }
+        }
+    }
+
+    /**
+     * SSDP: one "who is here?" message (M-SEARCH) to the local multicast
+     * address. Devices answer with a SERVER line (their software) and an ST
+     * line (what kind of device). Listens 2.5 seconds.
+     * Result: ip -> set of "SERVER / ST" strings.
+     */
+    private void ssdpSearch(Map<String, Set<String>> found) {
+        WifiManager wm = (WifiManager) getContext().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        WifiManager.MulticastLock lock = wm.createMulticastLock("victor-ssdp");
+        String msg = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 2\r\nST: ssdp:all\r\n\r\n";
+        try (DatagramSocket sock = new DatagramSocket()) {
+            lock.acquire();
+            byte[] data = msg.getBytes(StandardCharsets.US_ASCII);
+            sock.send(new DatagramPacket(data, data.length, InetAddress.getByName("239.255.255.250"), 1900));
+            sock.setSoTimeout(400);
+            long end = System.currentTimeMillis() + 2500;
+            byte[] buf = new byte[4096];
+            while (System.currentTimeMillis() < end) {
+                DatagramPacket p = new DatagramPacket(buf, buf.length);
+                try {
+                    sock.receive(p);
+                    String server = "", st = "";
+                    for (String line : new String(p.getData(), 0, p.getLength(), StandardCharsets.UTF_8).split("\r?\n")) {
+                        String low = line.toLowerCase();
+                        if (low.startsWith("server:")) server = line.substring(7).trim();
+                        if (low.startsWith("st:")) st = line.substring(3).trim();
+                    }
+                    if (!server.isEmpty() || !st.isEmpty()) {
+                        String v = (server + " / " + st);
+                        found.computeIfAbsent(p.getAddress().getHostAddress(), k -> ConcurrentHashMap.newKeySet()).add(v.length() > 160 ? v.substring(0, 160) : v);
+                    }
+                } catch (SocketTimeoutException ignored) { }
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (lock.isHeld()) lock.release();
         }
     }
 
