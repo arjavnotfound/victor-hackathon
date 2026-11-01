@@ -160,6 +160,9 @@ await step('network demo finds the camera hotspot and the video stream, not the 
   assert.match(text, /IPC-8F3A21[^]*default hotspot/);
   assert.match(text, /Answers as a video stream/);
   assert.doesNotMatch(text, /Living room TV/);
+  await page.click('.find');
+  await page.waitForFunction(() => /Warmer|Very close|Keep going/.test(document.querySelector('#word').textContent), null, { timeout: 15000 });
+  assert.match(await page.locator('#ssid').innerText(), /IPC-8F3A21/);
 });
 
 await step('laptop home shows a QR code for phones', async () => {

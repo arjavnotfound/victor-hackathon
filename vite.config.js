@@ -48,6 +48,7 @@ export default defineConfig({
         results: resolve(import.meta.dirname, 'results.html'),
         help: resolve(import.meta.dirname, 'help.html'),
         how: resolve(import.meta.dirname, 'how.html'),
+        find: resolve(import.meta.dirname, 'find.html'),
         network: resolve(import.meta.dirname, 'network.html'),
         challenge: resolve(import.meta.dirname, 'challenge.html'),
       },

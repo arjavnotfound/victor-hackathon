@@ -83,6 +83,21 @@ Only useful if one of the cameras has night-vision lights (IP Webcam on a phone 
 3. Note: is the IP Webcam phone listed? What does it say about it? Is anything else listed that is not a camera?
 4. Try on the college or hostel Wi-Fi too: many of those hide devices from each other, so expect fewer devices.
 
+### 4c. Not verified on a phone yet (added 1 Nov)
+
+None of these could be tested on the laptop. Try each once.
+
+- **Spoon test (lens shape filter).** Put a metal spoon and the hidden phone side by side, about arm's length away. Scan. The lens should be circled. In Details, turn on "Show ignored reflections": the spoon's shine should get a grey circle with "Wrong shape" or "Doesn't follow the flash".
+- **Coverage ring.** During a lens scan, turn slowly on the spot. The ring at the bottom right should fill slice by slice. Results should say "You checked N of 12 directions". If the phone has no compass the ring stays hidden.
+- **Network: video stream test.** On a Wi-Fi with a real camera (or a phone running a webcam app on port 554/8554), run the network check. The camera should show "Answers as a video stream". A TV or Chromecast on the same Wi-Fi should not be flagged.
+- **Network time.** The whole check should finish in about 15 seconds, with the progress line changing ("Knocking on every address…", "Asking video ports…", "Reading device names…").
+- **Find it.** Turn on a mini camera's hotspot (or a phone hotspot named like `IPC-1A2B3C`). Run the network check, tap "Find it" on it, and walk towards it. The ring should fill and say "Warmer"; next to it "Very close". The phone should pulse faster as you get closer.
+- **Find it is slow?** Android limits Wi-Fi scans to about 4 every 2 minutes. If the screen shows "Updates are slow on this phone", turn throttling off:
+  1. Settings > About phone > tap "Build number" 7 times (Developer options turn on).
+  2. Settings > System > Developer options.
+  3. Find "Wi-Fi scan throttling" and turn it off.
+  4. Go back to Find it. Readings should now update every second or two.
+
 ### 5. Save a report
 1. Tap **Next: results**. Check the "What was checked" list and the saved spot photos.
 2. Tap **Save report (PDF)**. Open the PDF from the download bar.

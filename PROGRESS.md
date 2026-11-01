@@ -18,6 +18,7 @@
 - Network: devices with port 554/8554 open get a short RTSP OPTIONS request; a reply starting "RTSP/1.0" means "Answers as a video stream". The app also listens for local announcements (mDNS camera service types, one SSDP search) and reads their server/type lines; media servers and TVs are not flagged.
 - Network names: our own strict rules (camera word as a whole word, or a camera prefix plus a hex serial, or a short model code plus a hex serial). Brand-name lists were removed. Ordinary names like "Airtel_Home", "JioFiber-5G" and "Campus WiFi" are tested to stay unflagged.
 - Network reasons are plain sentences, no scores. Nearby and device scans run at the same time with progress lines from the Android side, aimed at under 15 s. `network.html?demo=1` uses made-up data so the screen can be shown on a laptop.
+- Find it: a "Find it" button on each flagged nearby network opens find.html. The Android plugin's new `signal({ bssid })` asks for a scan and returns the newest reading with its age. The page averages the last 4 readings, says "Warmer"/"Colder" only past a 3 dB change, "Very close" above -42 dBm, and pulses faster when stronger (haptics in the app, navigator.vibrate on the web). If readings stay older than 8 s three times in a row it shows the scan-throttling tip. `find.html?demo=1` fakes a rising signal.
 
 ## 1 Nov: real app, real address
 

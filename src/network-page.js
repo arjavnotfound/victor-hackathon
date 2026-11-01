@@ -28,6 +28,8 @@ function progress(text, from, to, ms) {
   }, 200);
 }
 
+const findLink = (f) => 'find.html?' + new URLSearchParams({ bssid: f.bssid, ssid: f.label, ...(isDemo ? { demo: 1 } : {}) });
+
 async function run() {
   $('runBtn').disabled = true;
   $('idle').hidden = true;
@@ -61,7 +63,8 @@ async function run() {
     <li><div class="row" style="align-items:flex-start">
       <span class="ico warn">${icon(f.kind === 'nearby' ? 'wifi' : 'phone')}</span>
       <span class="row-text"><span>${esc(f.label)}</span>
-        <ul class="why">${f.reasons.map((r) => `<li>${esc(r)}</li>`).join('')}</ul></span>
+        <ul class="why">${f.reasons.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>
+        ${f.kind === 'nearby' && f.bssid ? `<a class="btn find" href="${findLink(f)}">Find it</a>` : ''}</span>
     </div></li>`).join('');
   stagger($('foundList'));
   $('notes').textContent = notes.join(' ');

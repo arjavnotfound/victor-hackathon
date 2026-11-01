@@ -125,6 +125,41 @@ public class NetworkCheckPlugin extends Plugin {
         }, 4000);
     }
 
+    /**
+     * Signal strength of one nearby network, for the "Find it" screen. Asks for
+     * a new scan and returns the newest result Android has. Android limits
+     * scans (about 4 per 2 minutes unless throttling is off in Developer
+     * options), so `age` tells the page how old the reading is.
+     */
+    @PluginMethod
+    public void signal(PluginCall call) {
+        String bssid = call.getString("bssid", "");
+        if (getPermissionState("location") != PermissionState.GRANTED) {
+            call.reject("Location permission is needed to read Wi-Fi signal.", "NO_PERMISSION");
+            return;
+        }
+        WifiManager wm = (WifiManager) getContext().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        try {
+            wm.startScan();
+        } catch (Exception ignored) {
+        }
+        JSObject ret = new JSObject();
+        try {
+            for (ScanResult r : wm.getScanResults()) {
+                if (bssid.equalsIgnoreCase(r.BSSID)) {
+                    ret.put("level", r.level);
+                    // ScanResult.timestamp is microseconds since boot.
+                    ret.put("age", android.os.SystemClock.elapsedRealtime() - r.timestamp / 1000);
+                    ret.put("seen", r.timestamp);
+                }
+            }
+        } catch (SecurityException e) {
+            call.reject("Android did not allow reading nearby Wi-Fi networks.", "NO_PERMISSION");
+            return;
+        }
+        call.resolve(ret);
+    }
+
     private boolean locationOn() {
         LocationManager lm = (LocationManager) getContext().getSystemService(Context.LOCATION_SERVICE);
         if (lm == null) return false;

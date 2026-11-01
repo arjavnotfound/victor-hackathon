@@ -111,7 +111,7 @@ for (const scheme of ['light', 'dark']) {
     await shot('how', true);
     await page.goto(base + '/network.html');
     await shot('network-web');
-    if (want('network-demo')) {
+    if (want('network-demo', 'find')) {
       await page.goto(base + '/network.html?demo=1');
       if (await page.isVisible('#runBtn')) {
         await page.click('#runBtn');
@@ -120,6 +120,11 @@ for (const scheme of ['light', 'dark']) {
         await page.waitForSelector('#found:not([hidden])', { timeout: 30000 });
         await page.waitForTimeout(600);
         await shot('network-demo', true);
+        if (want('find')) {
+          await page.click('.find');
+          await page.waitForTimeout(6000);
+          await shot('find', true);
+        }
       }
     }
     if (want('challenge')) {
