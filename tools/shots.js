@@ -135,6 +135,24 @@ for (const scheme of ['light', 'dark']) {
       await page.locator('#results').scrollIntoViewIfNeeded();
       await shot('challenge-result');
     }
+    // Hindi: the main screens once more with the language set to हिन्दी.
+    if (want('hi-')) {
+      await page.goto(base + '/');
+      await page.evaluate(() => localStorage.setItem('victor.lang', 'hi'));
+      for (const [name, path] of [['hi-home', '/'], ['hi-lens', '/lens.html?demo=1'], ['hi-results', '/results.html?demo=1'], ['hi-help', '/help.html'], ['hi-find', '/find.html?demo=1&ssid=IPC-8F3A21']]) {
+        await page.goto(base + path);
+        await page.waitForTimeout(name === 'hi-find' ? 4000 : 600);
+        await shot(name);
+      }
+      await page.goto(base + '/');
+      await sheet('[data-sheet=settings]', 'hi-home-settings');
+      await page.goto(base + '/network.html?demo=1');
+      await page.click('#runBtn');
+      await page.waitForSelector('#found:not([hidden])', { timeout: 30000 });
+      await page.waitForTimeout(600);
+      await shot('hi-network');
+      await page.evaluate(() => localStorage.removeItem('victor.lang'));
+    }
     await ctx.close();
   }
 }

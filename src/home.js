@@ -5,6 +5,7 @@ import { getChecks, getSnapshots, getWifiResult, clearSession } from './store.js
 import { findings } from './report-content.js';
 import { icon } from './icons.js';
 import { $, initPage, wireSheetButtons, closeSheet, when } from './ui.js';
+import { LANGS, getLang, setLang } from './strings.js';
 
 initPage('');
 $('tagline').textContent = TAGLINE;
@@ -21,6 +22,9 @@ function showLast() {
 showLast();
 
 $('settingsBody').innerHTML = `
+  <div class="label">Language</div>
+  <div class="seg" role="radiogroup" aria-label="Language">${Object.entries(LANGS).map(([k, v]) => `
+    <label><input type="radio" name="lang" value="${k}" ${getLang() === k ? 'checked' : ''}><span lang="${k}">${v}</span></label>`).join('')}</div>
   <div class="label">This phone</div>
   <ul class="group"><li><button class="row" id="clearAll" type="button"><span class="row-text bad-text">Clear results</span></button></li></ul>
   <p class="footer">Removes saved spots and which checks ran. Tuned settings stay.</p>`;
@@ -29,6 +33,9 @@ $('clearAll').addEventListener('click', () => {
   showLast();
   closeSheet();
 });
+for (const r of document.querySelectorAll('input[name=lang]')) {
+  r.addEventListener('change', () => { setLang(r.value); location.reload(); });
+}
 wireSheetButtons();
 
 // QR code for the laptop view only; loaded lazily so phones never fetch it.

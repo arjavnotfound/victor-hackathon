@@ -1,6 +1,7 @@
 // Small helpers shared by the phone pages.
 import { APP_NAME } from './config.js';
 import { fillIcons } from './icons.js';
+import { getLang, tr } from './strings.js';
 
 export const $ = (id) => document.getElementById(id);
 export const isDemo = new URLSearchParams(location.search).has('demo');
@@ -17,6 +18,7 @@ export function initPage(title) {
   for (const el of document.querySelectorAll('[data-app-name]')) el.textContent = APP_NAME;
   fillIcons();
   collapseTitle();
+  if (getLang() === 'hi') useHindi();
   if (!isDemo) return;
   for (const a of document.querySelectorAll('a[href]')) {
     if (a.origin !== location.origin) continue; // tel: links and other sites
@@ -131,4 +133,31 @@ export function when(iso) {
   if (days === 0) return `today, ${time}`;
   if (days === 1) return `yesterday, ${time}`;
   return `${d.toLocaleDateString([], { day: 'numeric', month: 'short' })}, ${time}`;
+}
+
+/**
+ * Hindi: swap every English text line that has a Hindi match, now and
+ * whenever the page changes its own text later (status lines, lists).
+ * A swapped line is no longer English, so it is not swapped twice.
+ */
+function useHindi() {
+  document.documentElement.lang = 'hi';
+  import('@fontsource/noto-sans-devanagari/400.css');
+  import('@fontsource/noto-sans-devanagari/600.css');
+  const swap = (node) => {
+    const t = tr(node.nodeValue);
+    if (t) node.nodeValue = node.nodeValue.replace(node.nodeValue.trim(), t);
+  };
+  const walk = (root) => {
+    if (root.nodeType === 3) return swap(root);
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    while (w.nextNode()) swap(w.currentNode);
+  };
+  walk(document.body);
+  new MutationObserver((list) => {
+    for (const m of list) {
+      if (m.type === 'characterData') swap(m.target);
+      else m.addedNodes.forEach(walk);
+    }
+  }).observe(document.body, { subtree: true, childList: true, characterData: true });
 }

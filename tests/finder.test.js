@@ -32,3 +32,14 @@ describe('find it', () => {
     expect(isSlow(2000)).toBe(false);
   });
 });
+
+import { tr } from '../src/strings.js';
+describe('hindi', () => {
+  it('translates fixed lines and lines with numbers, and leaves English alone', () => {
+    expect(tr('Lens check', 'hi')).toBe('लेंस जाँच');
+    expect(tr('2 worth a closer look', 'hi')).toBe('2 ध्यान से देखने लायक');
+    expect(tr('Wi-Fi chip made by Espressif, common in small cameras', 'hi')).toMatch(/^Wi-Fi chip Espressif/);
+    expect(tr('Lens check', 'en')).toBe(null);
+    expect(tr('लेंस जाँच', 'hi')).toBe(null); // already Hindi: not swapped again
+  });
+});
