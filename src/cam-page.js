@@ -5,14 +5,15 @@ import { describeSupport } from './camera.js';
 import { getSettings, saveSettings, getChecks, markCheck } from './store.js';
 import { headingOf, addHeading, emptyCoverage, countSeen, coverageText } from './coverage.js';
 
-// Analysis size: the long side is 320 px. Small enough to run every frame on
-// a phone, big enough that a lens a few metres away is still 1-3 pixels.
-const LONG_SIDE = 320;
+// Analysis size: the long side is 480 px. Small enough to run every frame on
+// a phone, big enough that a lens a few metres away is still 2-4 pixels
+// (at 320 px a tiny lens was averaged into its neighbours and faded).
+const LONG_SIDE = 480;
 
 /** Small canvas that reads the video at analysis size. */
-export function makeGrabber(video) {
+export function makeGrabber(video, longSide = LONG_SIDE) {
   const vw = video.videoWidth, vh = video.videoHeight;
-  const s = LONG_SIDE / Math.max(vw, vh);
+  const s = longSide / Math.max(vw, vh);
   const W = Math.round(vw * s), H = Math.round(vh * s);
   const c = document.createElement('canvas');
   c.width = W; c.height = H;

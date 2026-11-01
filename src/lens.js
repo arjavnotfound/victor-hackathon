@@ -157,7 +157,7 @@ function eachBlob(w, h, test, r, amp, raw, each) {
  * (`sd` from correlateCode is needed for 'flash').
  */
 export function findBlobs(r, amp, w, h, {
-  rMin = 0.8, ampMin = 6, minArea = 1, maxArea = 40, fillMin = 0.7, aspectMin = 0.6, shapeMinArea = 6,
+  rMin = 0.8, ampMin = 6, minArea = 1, maxArea = 90, fillMin = 0.7, aspectMin = 0.6, shapeMinArea = 6,
   raw = null, sd = null, rejects = null,
 } = {}) {
   const hit = new Uint8Array(w * h);
@@ -167,7 +167,7 @@ export function findBlobs(r, amp, w, h, {
     if (b.area < minArea) return;
     const reject = () => { if (rejects && b.area <= maxArea * 4) rejects.push({ x: b.x, y: b.y, area: b.area, bw: b.bw, bh: b.bh, reason: 'shape' }); };
     if (b.area > maxArea || !shapeOk(b, { fillMin, aspectMin, shapeMinArea })) return reject();
-    if (raw && !isIsolated(raw, w, h, b.x, b.y, b.peak)) return reject();
+    if (raw && !isIsolated(raw, w, h, b.x, b.y, b.peak, ringRadii(b))) return reject();
     blobs.push({
       x: b.x, y: b.y, area: b.area, r: b.r, amp: b.amp,
       // Score 0..100: mostly how well it follows the code, a little for how strong the blink is.
@@ -227,6 +227,55 @@ export function isIsolated(raw, w, h, cx, cy, peak, radii = [4, 6]) {
   return peak - ringMax >= 0.5 * (peak - ringMin);
 }
 
+/**
+ * Ring sizes for one spot. A lens held close (30 cm) is several pixels wide,
+ * and its own glow would land on a fixed 4 px ring and fail the test. So the
+ * rings sit just outside the spot, whatever its size.
+ */
+export function ringRadii({ bw, bh }) {
+  const half = Math.max(bw, bh) / 2;
+  return [Math.max(4, Math.ceil(half + 3)), Math.max(6, Math.ceil(half + 5))];
+}
+
+/**
+ * Hand shake during a scan. The code lasts about 3.5 s, and in that time a
+ * hand drifts a few pixels. A lens dot only 1-3 pixels wide then lands on
+ * different pixels in different bits, and no single pixel follows the code.
+ * So every frame is lined up with the first one before it is added in.
+ *
+ * Search for the shift (around the last known one, ±radius) where the two
+ * pictures differ least. Each picture is first divided by its own mean
+ * brightness, so the torch switching on does not look like a change.
+ * Returns { dx, dy }: content at (x, y) in `ref` is at (x + dx, y + dy) in `cur`.
+ */
+export function alignShift(ref, cur, w, h, guess = { dx: 0, dy: 0 }, radius = 3, margin = 40) {
+  const mean = (g) => { let s = 0, n = 0; for (let p = 0; p < g.length; p += 7) { s += g[p]; n++; } return s / n || 1; };
+  const ka = 1 / mean(ref), kb = 1 / mean(cur);
+  const lim = margin - 1;
+  const clamp = (v) => Math.max(-lim + radius, Math.min(lim - radius, v));
+  const gx = clamp(guess.dx), gy = clamp(guess.dy);
+  let best = { dx: gx, dy: gy }, bestC = Infinity;
+  for (let dy = gy - radius; dy <= gy + radius; dy++) {
+    for (let dx = gx - radius; dx <= gx + radius; dx++) {
+      let s = 0;
+      for (let y = margin; y < h - margin; y += 2) {
+        const a = y * w, b = (y + dy) * w + dx;
+        for (let x = margin; x < w - margin; x += 2) s += Math.abs(ref[a + x] * ka - cur[b + x] * kb);
+      }
+      if (s < bestC) { bestC = s; best = { dx, dy }; }
+    }
+  }
+  return best;
+}
+
+/** Add `cur`, shifted back by (dx, dy), into `sum` (edges are clamped). */
+export function addShifted(sum, cur, w, h, dx, dy) {
+  for (let y = 0; y < h; y++) {
+    const sy = Math.min(h - 1, Math.max(0, y + dy)) * w;
+    for (let x = 0; x < w; x++) sum[y * w + x] += cur[sy + Math.min(w - 1, Math.max(0, x + dx))];
+  }
+}
+
 /** Raw blink image: average of the "on" frames minus average of the "off" frames. */
 export function blinkImage(frames, code) {
   const out = new Float32Array(frames[0].length);
@@ -277,7 +326,7 @@ export const LENS_DEFAULTS = {
   settleMs: 120,   // frames from the start of a bit are skipped (torch + sensor lag)
   rMin: 0.8,       // how closely a pixel must follow the code (correlation)
   ampMin: 6,       // smallest blink that counts, in grey levels
-  maxArea: 40,     // biggest dot, in analysis pixels; bigger is a mirror or glossy surface
+  maxArea: 90,     // biggest dot, in analysis pixels (480 wide); bigger is a mirror or glossy surface
   fillMin: 0.7,    // a lens glint fills most of its bounding box; a slanted streak does not
   aspectMin: 0.6,  // and is about as wide as it is tall; the edge of a spoon is long and thin
   showIgnored: 0,  // 1 = draw the spots that were ignored, with the reason

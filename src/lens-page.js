@@ -10,7 +10,7 @@
 import { makeCode, codeToString } from './code.js';
 import {
   toGray, localContrast, correlateCode, findBlobs, updateTracks, blinkImage, LENS_DEFAULTS, spotLabel,
-  estimateTorchLag, timingFromCalibration, estimateShift, mergeRejects,
+  alignShift, addShifted, estimateTorchLag, timingFromCalibration, estimateShift, mergeRejects,
 } from './lens.js';
 import { addSnapshot, getSnapshots, markCheck, savePhone, getChecks } from './store.js';
 import { openCamera, setTorch, lockForTorch, phoneInfo } from './camera.js';
@@ -23,7 +23,7 @@ initPage('Lens check');
 const video = $('video'), overlay = $('overlay');
 const octx = overlay.getContext('2d');
 
-const settings = buildSliders($('sliders'), 'lens', LENS_DEFAULTS, [
+const settings = buildSliders($('sliders'), 'lens2', LENS_DEFAULTS, [
   ['rMin', 'Match needed (correlation)', 0.5, 0.99, 0.01],
   ['ampMin', 'Smallest blink (grey levels)', 1, 60, 1],
   ['maxArea', 'Biggest dot (pixels)', 2, 200, 1],
@@ -34,7 +34,7 @@ const settings = buildSliders($('sliders'), 'lens', LENS_DEFAULTS, [
   ['bits', 'Code length (bits)', 6, 16, 1],
 ]);
 
-let cam = null, grab = null, busy = false, torchOk = false, calTried = false;
+let cam = null, grab = null, busy = false, sweeping = false, torchOk = false, calTried = false;
 let spots = [], ignored = [], tracks = [], scans = getChecks().lens?.scans || 0, lastCode = null;
 
 const style = (s) => ({ color: s.confirmed ? '#ffb340' : 'rgba(255, 255, 255, .9)', text: s.confirmed ? 'Seen twice' : 'Possible reflection' });
@@ -57,10 +57,10 @@ async function start() {
   savePhone(await phoneInfo(cam));
   redraw();
   followHand();
-  $('scanBtn').textContent = 'Scan';
-  if (torchOk) setStatus('Point the phone at the area. Hold steady. Then move a little to the side and scan again.');
+  setShutter('idle');
+  if (torchOk) setStatus('Tap the button, then sweep slowly');
   else setStatus('This phone or browser does not let the page use the torch, so the lens check cannot run here. The night-vision check still works.', true);
-  if (!torchOk) { $('scanBtn').textContent = 'Go to the night-vision check'; $('hint').hidden = true; }
+  if (!torchOk) { setShutter('next'); $('hint').hidden = true; }
 }
 
 // ---------- scan ----------
@@ -69,7 +69,6 @@ const nextFrame = () => new Promise((r) => requestAnimationFrame(r));
 
 async function scan() {
   busy = true;
-  $('scanBtn').disabled = true;
   document.body.classList.add('scanning');
   $('hint').hidden = true;
   setStatus('Getting the camera ready…');
@@ -88,9 +87,13 @@ async function scan() {
   let torchMisses = 0, frames = 0;
   // One slow read-back should not end the scan; most of the code failing should.
   const tooManyMisses = () => torchMisses > code.length / 2;
-  setStatus('Scanning. Hold steady…');
+  setStatus('Sweep slowly across the area');
   $('hint').hidden = true;
 
+  // Every frame is lined up with the first one (see alignShift in lens.js),
+  // so a dot stays on the same pixel even as the hand drifts.
+  const ref = new Float32Array(n);
+  let shift = { dx: 0, dy: 0 }, haveRef = false;
   const t0 = performance.now() + 60;
   for (let i = 0; i < code.length && !tooManyMisses(); i++) {
     const start = t0 + i * bitMs;
@@ -99,14 +102,15 @@ async function scan() {
     // checked so a torch that never switches on is reported, not hidden.
     setTorch(cam, code[i]).then((ok) => { if (!ok) torchMisses++; });
     drawBits(code, i);
-    // Skip the first `settleMs`: the torch and the camera sensor need a moment
-    // to change. Frames from that moment are a mix of on and off.
+    // Frames from the first `settleMs` are only used to follow the hand: the
+    // torch and the sensor need a moment to change, so they are a mix of on and off.
     while (performance.now() < start + bitMs) {
       await nextFrame();
-      if (performance.now() < start + settleMs) continue;
       toGray(grab.rgba(), gray);
-      const s = sums[i];
-      for (let p = 0; p < n; p++) s[p] += gray[p];
+      if (!haveRef) { ref.set(gray); haveRef = true; }
+      shift = alignShift(ref, gray, W, H, shift);
+      if (performance.now() < start + settleMs) continue;
+      addShifted(sums[i], gray, W, H, shift.dx, shift.dy);
       counts[i]++; frames++;
     }
   }
@@ -115,20 +119,19 @@ async function scan() {
   document.body.classList.remove('scanning');
   const fps = frames / ((code.length * (bitMs - settleMs)) / 1000);
   busy = false;
-  $('scanBtn').disabled = false;
 
   if (tooManyMisses()) {
     setStatus('The torch did not switch on. This phone or browser may not allow it. The night-vision check still works.', true);
-    return;
+    return false;
   }
   // Every bit needs a few frames, or the average for that bit is meaningless.
   if (Math.min(...counts) < 2) {
     setStatus('The camera sent too few pictures. Keep this page open, hold steady and scan again.', true);
-    applySettings('lens', settings, { bitMs: Math.min(900, bitMs + 150) });
-    return;
+    applySettings('lens2', settings, { bitMs: Math.min(900, bitMs + 150) });
+    return false;
   }
   // Fewer than 4 frames in a bit makes the average noisy: use longer bits next time.
-  if (Math.min(...counts) < 4) applySettings('lens', settings, { bitMs: Math.min(900, bitMs + 100) });
+  if (Math.min(...counts) < 4) applySettings('lens2', settings, { bitMs: Math.min(900, bitMs + 100) });
 
   // Average each bit, then keep only small-scale detail (local contrast).
   sums.forEach((s, i) => { for (let p = 0; p < n; p++) s[p] /= counts[i]; });
@@ -154,20 +157,16 @@ async function scan() {
   $('debugInfo').innerHTML =
     `code ${codeToString(code)}<br>frames per bit ${counts.join(',')} · ${fps.toFixed(0)} fps<br>` +
     `best match ${maxR.toFixed(2)} · dots ${blobs.length} · ignored ${ignored.length} · scans ${scans}<br>` +
-    `top score ${blobs[0]?.score ?? '-'} · torch misses ${torchMisses} · analysis ${W}x${H}<br>` +
+    `top score ${blobs[0]?.score ?? '-'} · torch misses ${torchMisses} · analysis ${W}x${H} · drift ${shift.dx},${shift.dy} px<br>` +
     `torch timing: ${settings.calLag ? `${settings.calLag} ms to switch` : 'not measured'}`;
   if (spots.length) navigator.vibrate?.(spots.some((s) => s.confirmed) ? [30, 60, 30] : 30);
 
   $('saveBtn').disabled = !spots.length;
-  $('scanBtn').textContent = 'Scan again';
-  if (spots.some((s) => s.confirmed)) {
-    setStatus('Seen twice, worth a closer look. Save this spot, or keep checking.');
-  } else if (spots.length) {
-    setStatus('Possible reflection. Move a little to the side and scan again to see if it stays.');
-  } else {
-    setStatus('Nothing blinked back here. Point at the next area and scan, or try from 1 to 2 metres away.');
-  }
+  if (spots.some((s) => s.confirmed)) setStatus('Seen twice. Worth a closer look.');
+  else if (spots.length) setStatus('Possible reflection. Keep it in view.');
+  else setStatus('Nothing blinked back. Keep sweeping.');
   redraw();
+  return true;
 }
 
 /**
@@ -203,7 +202,7 @@ async function calibrate() {
   const fps = samples.length / span;
   const cal = estimateTorchLag(samples, switches);
   if (!cal) return; // the torch did not visibly light the scene; keep the defaults
-  applySettings('lens', settings, { ...timingFromCalibration(cal, fps), calibrated: true, calLag: Math.round(cal.riseMs) });
+  applySettings('lens2', settings, { ...timingFromCalibration(cal, fps), calibrated: true, calLag: Math.round(cal.riseMs) });
 }
 
 /**
@@ -258,10 +257,9 @@ function drawHeat(r, W, H) {
   ctx.putImageData(img, 0, 0);
 }
 
-/** Thin bar that fills as the flash code plays; hidden when idle. */
+/** The ring around the shutter fills as the flash code plays. */
 function drawBits(code, now) {
-  $('progress').classList.toggle('on', now >= 0);
-  $('progress').firstElementChild.style.width = now >= 0 ? `${((now + 1) / code.length) * 100}%` : '0';
+  $('scanBtn').style.setProperty('--p', now >= 0 ? (now + 1) / code.length : 0);
 }
 
 function showSaved() {
@@ -282,8 +280,24 @@ $('scanBtn').addEventListener('click', async () => {
     return;
   }
   if (!torchOk) { location.href = $('nextBtn').href; return; }
-  scan();
+  // One tap starts a sweep: scans run back to back until tapped again, so a
+  // spot that shows up in two scans in a row is confirmed on its own.
+  if (sweeping) { sweeping = false; setShutter('stopping'); return; }
+  sweeping = true;
+  setShutter('on');
+  while (sweeping && (await scan())) { /* next scan */ }
+  sweeping = false;
+  setShutter('idle');
 });
+
+/** The round button: start camera, sweep, stop. Text sits under it for screen readers too. */
+function setShutter(state) {
+  const b = $('scanBtn');
+  b.dataset.state = state;
+  const label = { start: 'Start camera', idle: 'Start sweep', on: 'Stop', stopping: 'Finishing…', next: 'Night-vision check' }[state];
+  b.setAttribute('aria-label', label);
+  $('shutterLabel').textContent = label;
+}
 
 $('saveBtn').addEventListener('click', () => {
   if (!spots.length) return;
@@ -302,13 +316,14 @@ $('saveBtn').addEventListener('click', () => {
 wireSheetButtons();
 $('clearBtn').addEventListener('click', () => { tracks = []; spots = []; ignored = []; redraw(); $('saveBtn').disabled = true; });
 $('ignoredToggle').checked = !!settings.showIgnored;
-$('ignoredToggle').addEventListener('change', (e) => { applySettings('lens', settings, { showIgnored: e.target.checked ? 1 : 0 }); redraw(); });
+$('ignoredToggle').addEventListener('change', (e) => { applySettings('lens2', settings, { showIgnored: e.target.checked ? 1 : 0 }); redraw(); });
 $('recalBtn').addEventListener('click', () => {
-  applySettings('lens', settings, { calibrated: false });
+  applySettings('lens2', settings, { calibrated: false });
   calTried = false;
   setStatus('The torch timing will be measured again on the next scan.');
 });
 window.addEventListener('resize', redraw);
 showSaved();
 startCoverage($('cover'), () => busy, { demo: isDemo });
-if (isDemo) setStatus('Demo camera: a simulated room. Tap Start camera, then Scan twice.');
+setShutter('start');
+if (isDemo) setStatus('Demo camera: a simulated room');

@@ -38,7 +38,7 @@ async function start() {
   if (cam.demo) cam.demo.ir = true;
   else await setTorch(cam, false); // the torch would light up everything and hide the dots
   await attachStream(video, cam.stream);
-  grab = makeGrabber(video);
+  grab = makeGrabber(video, 320); // IR thresholds are tuned at 320 px
   tracks = []; shown = [];
   showSupport($('supportTable'), cam);
   savePhone(await phoneInfo(cam));

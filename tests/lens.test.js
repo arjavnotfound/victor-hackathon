@@ -247,3 +247,59 @@ describe('isolation test', () => {
     expect(isIsolated(streak, w, h, 30, 20, 50)).toBe(false);
   });
 });
+
+import { alignShift, addShifted, ringRadii } from '../src/lens.js';
+
+describe('hand shake', () => {
+  // Textured wall: random blocks, so a shift is visible.
+  function wall(w, h, rand) {
+    const g = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) g[y * w + x] = 40 + 60 * ((((x >> 3) * 7 + (y >> 3) * 13 + ((x * y) >> 6)) % 5) / 5) + rand() * 4;
+    return g;
+  }
+  const shift = (g, w, h, dx, dy, gain = 1) => {
+    const o = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const sx = Math.min(w - 1, Math.max(0, x - dx)), sy = Math.min(h - 1, Math.max(0, y - dy));
+      o[y * w + x] = g[sy * w + sx] * gain;
+    }
+    return o;
+  };
+
+  it('finds the shift even when the torch makes the picture brighter', () => {
+    const w = 200, h = 120, a = wall(w, h, seeded(1));
+    expect(alignShift(a, shift(a, w, h, 2, -1, 1.4), w, h)).toEqual({ dx: 2, dy: -1 });
+    expect(alignShift(a, shift(a, w, h, 7, 5), w, h, { dx: 5, dy: 4 })).toEqual({ dx: 7, dy: 5 });
+  });
+
+  it('keeps a 2 px lens that drifts 1 px per bit (lost without lining up)', () => {
+    const w = 200, h = 120, rand = seeded(4), code = makeCode(10, rand);
+    const base = wall(w, h, rand);
+    const frames = code.map((bit, i) => {
+      const g = Float32Array.from(base, (v) => v * (1 + 0.3 * bit) + (rand() - 0.5) * 6);
+      for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) g[(60 + y) * w + 100 + x] += bit * 120;
+      return shift(g, w, h, i, 0);
+    });
+    const detect = (fs) => {
+      const c = fs.map((f) => localContrast(f, w, h, 4));
+      const { r, amp } = correlateCode(c, code);
+      return findBlobs(r, amp, w, h).filter((b) => Math.abs(b.x - 100.5) < 3 && Math.abs(b.y - 60.5) < 3);
+    };
+    expect(detect(frames)).toHaveLength(0);
+    let guess = { dx: 0, dy: 0 };
+    const lined = frames.map((f) => {
+      guess = alignShift(frames[0], f, w, h, guess);
+      const s = new Float32Array(w * h);
+      addShifted(s, f, w, h, guess.dx, guess.dy);
+      return s;
+    });
+    expect(detect(lined).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('a close, wide lens passes the ring test with rings sized to it', () => {
+    const w = 60, h = 40, raw = new Float32Array(w * h);
+    for (let y = -4; y <= 4; y++) for (let x = -4; x <= 4; x++) if (x * x + y * y <= 16) raw[(20 + y) * w + 30 + x] = 50 - (x * x + y * y);
+    expect(isIsolated(raw, w, h, 30, 20, 50)).toBe(false); // fixed 4 px ring lands on its own glow
+    expect(isIsolated(raw, w, h, 30, 20, 50, ringRadii({ bw: 9, bh: 9 }))).toBe(true);
+  });
+});

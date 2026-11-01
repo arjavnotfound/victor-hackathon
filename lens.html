@@ -26,15 +26,14 @@
     </span>
   </header>
 
-  <p class="cam-status"><span id="status" role="status" aria-live="polite">Point the phone at the area and hold steady. Then move a little to the side and scan again.</span>
-    <span class="cam-hint" id="hint">Hold the phone between arm's length and about 1 metre from the area.</span></p>
+  <p class="cam-status"><span id="status" role="status" aria-live="polite">Point at a spot that could hide a camera</span>
+    <span class="cam-hint" id="hint">Arm's length to 1 metre away</span></p>
 
   <div class="cam-bottom">
-    <div class="progress" id="progress" aria-hidden="true"><i></i></div>
-    <button id="scanBtn" class="shutter">Start camera</button>
-    <div class="cam-row">
-      <button id="saveBtn" class="text-btn" disabled>Save this spot</button>
-      <a id="nextBtn" class="text-btn" href="ir.html">Next: night-vision</a>
+    <div class="cam-controls">
+      <button id="saveBtn" class="cam-side" disabled><span data-icon="pin"></span><span>Save</span></button>
+      <div class="shutter-wrap"><button id="scanBtn" class="shutter" data-state="start" aria-label="Start camera"></button><span class="shutter-label" id="shutterLabel">Start camera</span></div>
+      <a id="nextBtn" class="cam-side" href="ir.html"><span data-icon="night"></span><span>Next</span></a>
     </div>
     <p id="saved" class="cam-foot"></p>
   </div>
