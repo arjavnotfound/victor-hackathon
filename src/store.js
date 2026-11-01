@@ -9,6 +9,7 @@ const CHECKS_KEY = 'victor.checks';
 const PHONE_KEY = 'victor.phone';
 const WIFI_KEY = 'victor.wifi';
 const SETTINGS_KEY = 'victor.settings.';
+const AIR_KEY = 'victor.air';
 const MAX_SNAPS = 6;
 // A 640 px JPEG is usually 40-90k characters as a data URL. Anything far
 // bigger is skipped so a few snapshots cannot fill the ~5 MB storage.
@@ -56,6 +57,12 @@ export const getChallenge = () => read(SESSION_KEY, null);
 export const saveChallenge = (s) => write(SESSION_KEY, s);
 export const getWifiResult = () => read(WIFI_KEY, null);
 export const saveWifiResult = (r) => write(WIFI_KEY, r);
+
+// ---------- Wi-Fi map sources ----------
+// { capture: [...sources from the traffic test], nearby: [...from the Android scan], at }
+
+export const getAir = () => read(AIR_KEY, { capture: [], nearby: [] });
+export const saveAir = (part) => write(AIR_KEY, { ...getAir(), ...part, at: new Date().toISOString() });
 
 // ---------- tuned thresholds from the Details panel ----------
 

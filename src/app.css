@@ -327,8 +327,8 @@ input[type=range]::-moz-range-thumb { width: 24px; height: 24px; border: 0; bord
 .tile.wide { grid-column: span 2; min-height: 0; flex-direction: row; align-items: center; }
 .tile .t-ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--raised); }
 .tile .t-ico svg { width: 22px; height: 22px; }
-.tile .t-name { font-size: 19px; font-weight: 600; letter-spacing: -.02em; line-height: 1.15; }
-.tile .t-sub { font-size: 14px; color: var(--muted); margin-top: 3px; }
+.tile .t-name { display: block; font-size: 19px; font-weight: 600; letter-spacing: -.02em; line-height: 1.15; }
+.tile .t-sub { display: block; font-size: 14px; color: var(--muted); margin-top: 3px; }
 .tile .t-corner { position: absolute; top: 16px; right: 16px; color: var(--faint); }
 .tile .t-corner svg { width: 18px; height: 18px; }
 .big-num { font-size: 56px; font-weight: 600; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -346,8 +346,9 @@ input[type=range]::-moz-range-thumb { width: 24px; height: 24px; border: 0; bord
 
 /* Brand mark: eight rays, like light glinting off glass */
 .mark { width: 100%; height: 100%; color: var(--ink); }
-.mark line { stroke: currentColor; stroke-width: 6; stroke-linecap: butt; }
-.mark.live { animation: turn 24s linear infinite; }
+.mark line { stroke: currentColor; stroke-width: 4.5; stroke-linecap: butt; }
+.mark.live { animation: turn 40s linear infinite; }
+@property --v { syntax: "<number>"; inherits: true; initial-value: 0; }
 .mark.draw line { stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw .7s var(--ease) forwards; animation-delay: calc(var(--i) * 50ms); }
 @keyframes turn { to { transform: rotate(1turn); } }
 @keyframes draw { to { stroke-dashoffset: 0; } }

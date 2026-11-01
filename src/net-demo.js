@@ -12,10 +12,12 @@ export const demoPlugin = {
     return {
       locationOn: true,
       networks: [
-        { ssid: 'Airtel_Hostel_5G', bssid: 'A0:AB:1B:10:20:30', level: -52 },
-        { ssid: 'JioFiber-5G', bssid: 'C8:3A:35:44:55:66', level: -67 },
-        { ssid: 'IPC-8F3A21', bssid: '24:0A:C4:8F:3A:21', level: -58 },
-        { ssid: 'Galaxy A51 1234', bssid: '02:1A:11:22:33:44', level: -74 },
+        { ssid: 'Airtel_Hostel_5G', bssid: 'A0:AB:1B:10:20:30', level: -52, frequency: 5745 },
+        { ssid: 'Airtel_Hostel', bssid: 'A0:AB:1B:10:20:31', level: -49, frequency: 2412 },
+        { ssid: 'JioFiber-5G', bssid: 'C8:3A:35:44:55:66', level: -67, frequency: 5220 },
+        { ssid: 'IPC-8F3A21', bssid: '24:0A:C4:8F:3A:21', level: -58, frequency: 2462 },
+        { ssid: 'Galaxy A51 1234', bssid: '02:1A:11:22:33:44', level: -74, frequency: 2437 },
+        { ssid: 'Campus WiFi', bssid: '70:4F:57:12:34:56', level: -81, frequency: 5500 },
       ],
     };
   },

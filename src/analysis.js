@@ -139,6 +139,7 @@ export function analyzeCapture(cap, opts) {
   const frames = new Map();
   const rssiPts = new Map();
   const chanCount = new Map();
+  const devFreq = new Map(); // the channel each device was heard on (for the Wi-Fi map)
   for (let i = 0; i < total; i++) {
     if (cap.freq[i]) {
       const ch = freqToChannel(cap.freq[i]);
@@ -146,6 +147,7 @@ export function analyzeCapture(cap, opts) {
     }
     const s = cap.src[i];
     if (s < 0) continue;
+    if (cap.freq[i]) devFreq.set(s, cap.freq[i]);
     const b = Math.floor((cap.t[i] - winStart) / binS);
     if (b < 0 || b >= nBins) continue;
     if (!Number.isNaN(cap.rssi[i])) {
@@ -208,6 +210,7 @@ export function analyzeCapture(cap, opts) {
       bestOff: best.off,
       rssi: thin(pts, 400),
       meanRssi: pts.length ? pts.reduce((a, q) => a + q[1], 0) / pts.length : null,
+      freq: devFreq.get(s) || 0,
     };
   });
 

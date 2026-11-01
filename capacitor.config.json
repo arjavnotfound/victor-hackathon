@@ -1,6 +1,6 @@
 {
   "appId": "app.teamvictor.check",
-  "appName": "VICTOR",
+  "appName": "Glint",
   "webDir": "dist",
   "android": { "backgroundColor": "#f2f2f7" }
 }

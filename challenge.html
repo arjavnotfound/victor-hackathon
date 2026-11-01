@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="icon.svg" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <title>VICTOR · Wi-Fi check</title>
+  <title>Glint · Wi-Fi check</title>
   <link rel="stylesheet" href="src/style.css" />
   <style>
     #flicker { position: fixed; inset: 0; z-index: 50; display: none; background: #777; color: #fff; }
@@ -94,6 +94,7 @@
       <div class="step-n">Result</div>
       <div id="verdict" class="verdict"></div>
       <p id="verdictSub" class="muted"></p>
+      <p><a class="btn" href="map.html">Open the 3D Wi-Fi map</a></p>
       <canvas id="traffic"></canvas>
       <p class="small muted">Shaded = screen flashing. The line should rise inside the shaded parts if it's a camera.</p>
       <details>

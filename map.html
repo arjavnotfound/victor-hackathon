@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <link rel="icon" href="icon.svg" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <title>Glint · Wi-Fi map</title>
+  <link rel="stylesheet" href="src/app.css" />
+  <style>
+    body { overflow: hidden; height: 100dvh; }
+    #scene { position: fixed; inset: 0; touch-action: none; }
+    #scene canvas { display: block; outline: none; }
+    .map-top { position: fixed; z-index: 3; top: 0; left: 0; right: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: var(--top) 4px 18px; background: linear-gradient(#000, rgba(0,0,0,0)); }
+    .map-top .t { font-size: 17px; font-weight: 600; }
+    .verdict { position: fixed; z-index: 3; left: 16px; right: 16px; top: calc(58px + var(--top)); display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 20px; background: rgba(28,28,31,.8); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); font: 600 15px var(--font); color: var(--ink); cursor: pointer; animation: rise .5s var(--ease) both; animation-delay: calc(var(--i) * 80ms); }
+    .chip i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c); }
+    .chip span { color: var(--muted); font-weight: 500; }
+    .chip.suspicious { border-color: rgba(255, 90, 82, .5); }
+    .tag { position: fixed; z-index: 2; pointer-events: none; transform: translate(-50%, calc(-100% - 18px)); padding: 4px 10px; border-radius: 12px; background: rgba(0,0,0,.72); font: 600 13px var(--font); white-space: nowrap; color: var(--c); border: 1px solid var(--c); }
+    .hint { position: fixed; z-index: 3; left: 0; right: 0; bottom: calc(18px + var(--bottom)); text-align: center; font-size: 13px; color: var(--muted); pointer-events: none; transition: opacity .6s; }
+    .loading { position: fixed; inset: 0; z-index: 4; display: grid; place-items: center; background: #000; transition: opacity .5s, visibility .5s; }
+    .loading .m { width: 64px; height: 64px; }
+    .loading p { margin-top: 16px; color: var(--muted); font-size: 15px; text-align: center; }
+    .loading.gone { opacity: 0; visibility: hidden; }
+    .empty { position: fixed; inset: 0; z-index: 4; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; background: #000; }
+    .empty h2 { font-size: 28px; font-weight: 600; letter-spacing: -.03em; }
+    .empty p { color: var(--muted); max-width: 30ch; margin: 0 0 8px; }
+    .empty .btn { max-width: 320px; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: 600; background: color-mix(in srgb, var(--c) 18%, transparent); color: var(--c); }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .stat { background: var(--sheet-row); border-radius: 16px; padding: 12px 14px; }
+    .stat b { display: block; font-size: 24px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+    .stat span { font-size: 13px; color: var(--muted); }
+    .bars { display: inline-flex; gap: 2px; align-items: flex-end; height: 14px; margin-left: 6px; vertical-align: middle; }
+    .bars i { width: 4px; border-radius: 1px; background: var(--faint); }
+    .bars i.on { background: var(--ink); }
+    #chart { width: 100%; height: 110px; display: block; margin-top: 10px; border-radius: 16px; background: var(--sheet-row); }
+    .why { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 8px; }
+    .why li { display: flex; gap: 10px; font-size: 15px; line-height: 1.35; }
+    .why li::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--c); margin-top: 7px; }
+    .src-name { font-size: 22px; font-weight: 600; letter-spacing: -.02em; margin: 2px 0 6px; word-break: break-all; }
+    .legend { position: fixed; z-index: 3; right: 12px; bottom: calc(46px + var(--bottom)); font-size: 12px; color: var(--muted); text-align: right; line-height: 1.6; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div id="scene"></div>
+  <header class="map-top">
+    <a class="icon-btn" href="./" aria-label="Home"><span data-icon="back"></span></a>
+    <span class="t">Wi-Fi map</span>
+    <span class="nav-end"><button class="icon-btn" id="resetBtn" aria-label="Reset view"><span data-icon="target"></span></button></span>
+  </header>
+  <div class="verdict" id="verdict" role="status" aria-live="polite"></div>
+  <div id="tags"></div>
+  <p class="legend" id="legend">Across: frequency<br>Up: upload<br>Near: stronger signal</p>
+  <p class="hint" id="hint">Drag to turn · pinch to zoom · two fingers to move · tap a dot</p>
+
+  <div class="loading" id="loading"><div><div class="m" id="loadMark"></div><p id="loadText">Reading the air…</p></div></div>
+
+  <div class="empty" id="empty" hidden>
+    <div style="width:56px;height:56px" id="emptyMark"></div>
+    <h2>No Wi-Fi data yet</h2>
+    <p id="emptyText">Scan nearby networks with the Android app, or run the traffic test on a laptop.</p>
+    <button class="btn primary" id="scanBtn" hidden>Scan nearby networks</button>
+    <a class="btn" href="map.html?demo=1" id="sampleBtn">Show a sample room</a>
+  </div>
+
+  <aside id="details" class="sheet" hidden aria-label="Source details">
+    <span class="grabber"></span>
+    <div class="sheet-head"><span></span><h3></h3><button class="text-btn" data-close>Done</button></div>
+    <div id="detailBody"></div>
+  </aside>
+
+  <script type="module" src="./src/map-page.js"></script>
+</body>
+</html>

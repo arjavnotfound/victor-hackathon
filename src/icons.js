@@ -34,3 +34,15 @@ export const icon = (name) =>
 export function fillIcons(root = document) {
   for (const el of root.querySelectorAll('[data-icon]')) if (!el.firstChild) el.innerHTML = icon(el.dataset.icon);
 }
+
+/**
+ * The Glint mark: four long rays and four short ones around an empty
+ * middle, like light catching a lens. `cls` adds 'live' (turns slowly) or
+ * 'draw' (rays draw in one after another).
+ */
+export function markSvg(cls = '') {
+  const rays = [[50, 4, 50, 38], [50, 62, 50, 96], [4, 50, 38, 50], [62, 50, 96, 50],
+    [34, 34, 43, 43], [57, 57, 66, 66], [66, 34, 57, 43], [43, 57, 34, 66]];
+  return `<svg class="mark ${cls}" viewBox="0 0 100 100" aria-hidden="true">${rays.map(([a, b, c, d], i) =>
+    `<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" style="--i:${i}"/>`).join('')}</svg>`;
+}

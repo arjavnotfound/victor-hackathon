@@ -3,7 +3,8 @@
 
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { summarize, ALL_PORTS } from './network.js';
-import { markCheck } from './store.js';
+import { markCheck, saveAir } from './store.js';
+import { fromNearby } from './airmap.js';
 import { icon } from './icons.js';
 import { $, esc, initPage, animateNumber, stagger, isDemo } from './ui.js';
 import { demoPlugin } from './net-demo.js';
@@ -51,6 +52,7 @@ async function run() {
   else notes.push(lan.reason.message);
   clearInterval(barTimer);
 
+  if (nearby.length) saveAir({ nearby: fromNearby(nearby) });
   const sum = summarize({ nearby, devices });
   markCheck('network', sum);
   $('progressBox').hidden = true;
