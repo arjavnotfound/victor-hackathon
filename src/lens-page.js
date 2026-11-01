@@ -71,7 +71,9 @@ async function scan() {
   busy = true;
   document.body.classList.add('scanning');
   $('hint').hidden = true;
-  setStatus('Getting the camera ready…');
+  // During a sweep the last result stays on screen until the next one is in.
+  const first = !lastCode;
+  if (first) setStatus('Getting the camera ready…');
   const locked = await lockForTorch(cam);
   showSupport($('supportTable'), cam, locked);
   if (!settings.calibrated && !calTried) await calibrate();
@@ -87,7 +89,7 @@ async function scan() {
   let torchMisses = 0, frames = 0;
   // One slow read-back should not end the scan; most of the code failing should.
   const tooManyMisses = () => torchMisses > code.length / 2;
-  setStatus('Sweep slowly across the area');
+  if (first) setStatus('Sweep slowly across the area');
   $('hint').hidden = true;
 
   // Every frame is lined up with the first one (see alignShift in lens.js),
@@ -270,6 +272,7 @@ function showSaved() {
 // ---------- buttons ----------
 
 $('scanBtn').addEventListener('click', async () => {
+  if (sweeping) { sweeping = false; setShutter('stopping'); return; }
   if (busy) return;
   if (!cam) {
     try { await start(); } catch (e) {
@@ -282,7 +285,6 @@ $('scanBtn').addEventListener('click', async () => {
   if (!torchOk) { location.href = $('nextBtn').href; return; }
   // One tap starts a sweep: scans run back to back until tapped again, so a
   // spot that shows up in two scans in a row is confirmed on its own.
-  if (sweeping) { sweeping = false; setShutter('stopping'); return; }
   sweeping = true;
   setShutter('on');
   while (sweeping && (await scan())) { /* next scan */ }

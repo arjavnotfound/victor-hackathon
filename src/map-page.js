@@ -41,6 +41,11 @@ async function loadSources() {
     const { networks } = await demoPlugin.nearby();
     return [...capture, ...fromNearby(networks)];
   }
+  // In the Android app the map scans the air itself on opening: no button, no laptop.
+  if (NetworkCheck) {
+    $('loadText').textContent = 'Listening to Wi-Fi around you…';
+    try { saveAir({ nearby: fromNearby((await NetworkCheck.nearby()).networks) }); } catch { /* keep the last scan */ }
+  }
   const air = getAir();
   return [...(air.capture || []), ...(air.nearby || [])];
 }

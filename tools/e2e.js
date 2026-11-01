@@ -36,12 +36,12 @@ await step('home loads and links through the flow', async () => {
   await page.goto(base + '/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  assert.match(await text('#tagline'), /60-second privacy check/);
-  assert.equal(await page.locator('#last').isVisible(), false);
-  await page.click('.bottom-bar .btn');
+  assert.match(await text('#lastText'), /No checks yet/);
+  await page.click('#scanOrb');
   await page.waitForURL(/lens\.html/);
   await page.goto(base + '/?demo=1');
-  assert.match(await page.getAttribute('.bottom-bar .btn', 'href'), /lens\.html\?demo=1$/);
+  assert.match(await page.getAttribute('#scanOrb', 'href'), /lens\.html\?demo=1$/);
+  assert.match(await page.getAttribute('a[href*="map.html"]', 'href'), /map\.html\?demo=1$/);
   await page.goto(base + '/help.html');
   assert.match(await text('h1'), /If you found something/);
   await page.goto(base + '/how.html');
@@ -53,15 +53,12 @@ await step('lens check (demo) finds the simulated lens, seen twice, and saves it
   await page.goto(base + '/lens.html?demo=1');
   await shot('lens-start');
   await page.click('#scanBtn'); // start camera
-  await page.waitForFunction(() => document.querySelector('#scanBtn').textContent === 'Scan');
-  for (let k = 0; k < 3; k++) {
-    await page.click('#scanBtn');
-    await page.waitForFunction(() => !document.querySelector('#scanBtn').disabled, null, { timeout: 15000 });
-    if (/Seen twice/.test(await text('#status'))) break;
-    await page.waitForTimeout(800); // the demo camera drifts a little, like a hand
-  }
-  assert.match(await text('#status'), /Seen twice, worth a closer look/);
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#scanBtn')).opacity), '1');
+  await page.waitForFunction(() => document.querySelector('#scanBtn').dataset.state === 'idle');
+  // One tap starts a sweep; scans repeat until a spot is seen twice, then stop.
+  await page.click('#scanBtn');
+  await page.waitForFunction(() => /Seen twice/.test(document.querySelector('#status').textContent), null, { timeout: 30000 });
+  await page.click('#scanBtn');
+  await page.waitForFunction(() => document.querySelector('#scanBtn').dataset.state === 'idle', null, { timeout: 15000 });
   await shot('lens-found');
   await page.click('#detailsBtn');
   await page.waitForTimeout(350);
@@ -177,6 +174,20 @@ await step('laptop home shows a QR code for phones', async () => {
   await p.goto(base + '/');
   await p.waitForFunction(() => document.querySelector('#qr').width > 0, null, { timeout: 10000 });
   await wide.close();
+});
+
+await step('Wi-Fi map (demo) shows a red source and opens its stats', async () => {
+  await page.goto(base + '/map.html?demo=1');
+  await page.waitForSelector('.chip.suspicious', { timeout: 15000 });
+  await page.waitForTimeout(1500);
+  await shot('map');
+  await page.click('.chip.suspicious');
+  await page.waitForSelector('#details.open');
+  assert.match(await text('#detailBody'), /Suspicious/);
+  assert.match(await text('#detailBody'), /Channel/);
+  assert.match(await text('#detailBody'), /screen flashes/);
+  await page.waitForTimeout(500);
+  await shot('map-details');
 });
 
 await step('no console errors anywhere', async () => {
