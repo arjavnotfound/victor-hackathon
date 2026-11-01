@@ -18,6 +18,7 @@ import { makeDemoCapture } from './sim.js';
 import { parseCapture } from './pcap.js';
 import { analyzeCapture } from './analysis.js';
 import { makeCode, seeded } from './code.js';
+import { hello, startScan, status, waitForResult } from './bridge.js';
 
 initPage('Wi-Fi map');
 const COLOR = { safe: '#34d17a', unsure: '#ffb547', suspicious: '#ff5a52' };
@@ -371,11 +372,21 @@ function frame(now) {
 // ---------- start ----------
 
 async function start() {
+  const listener = isDemo ? null : await hello();
+  // A scan may have finished (or still be running) while this page was closed.
+  if (listener) {
+    const s = await status().catch(() => null);
+    if (s?.phase === 'done' && s.result && s.result.at > (getAir().captureAt || '')) saveAir({ capture: s.result.sources, captureAt: s.result.at });
+    if (['capturing', 'waiting', 'analysing'].includes(s?.phase)) follow(s);
+  }
+  $('listenBtn').hidden = !listener;
   const sources = await loadSources();
   if (!sources.length) {
     $('loading').classList.add('gone');
     $('empty').hidden = false;
     $('scanBtn').hidden = !NetworkCheck;
+    $('emptyListen').hidden = !listener;
+    if (listener) $('emptyText').textContent = 'Listen for 30 seconds to see every device nearby and how much it uploads.';
     return;
   }
   const map = buildMap(sources);
@@ -399,6 +410,41 @@ $('scanBtn').addEventListener('click', async () => {
     $('scanBtn').textContent = 'Scan nearby networks';
   }
 });
+
+// ---------- listening (traffic scan) ----------
+
+/** Full-screen countdown while the air is being listened to, then rebuild the map. */
+async function follow(first) {
+  $('listening').hidden = false;
+  const end = first.startedAt + first.seconds * 1000;
+  const tick = setInterval(() => {
+    const left = Math.ceil((end - Date.now()) / 1000);
+    $('lsCount').textContent = Math.max(0, left);
+    if (left <= 0) { $('lsTitle').textContent = 'Reading what it heard'; $('lsText').textContent = 'A few more seconds.'; }
+  }, 250);
+  try {
+    const r = await waitForResult((s) => { if (s?.phase === 'waiting' && !s.auto) $('lsText').textContent = 'Waiting for the capture to finish.'; });
+    saveAir({ capture: r.sources, captureAt: r.at });
+    location.reload();
+  } catch (e) {
+    clearInterval(tick);
+    $('lsTitle').textContent = 'The scan did not finish';
+    $('lsText').textContent = e.message;
+    setTimeout(() => { $('listening').hidden = true; }, 4000);
+  }
+}
+
+async function listen() {
+  try {
+    const { seconds } = await startScan({ mode: 'listen', seconds: 30 });
+    follow({ startedAt: Date.now(), seconds });
+  } catch (e) {
+    $('hint').textContent = e.message;
+    $('hint').style.opacity = 1;
+  }
+}
+$('listenBtn').addEventListener('click', listen);
+$('emptyListen').addEventListener('click', listen);
 
 wireSheetButtons();
 start();

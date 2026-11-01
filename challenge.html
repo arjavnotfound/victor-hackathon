@@ -46,9 +46,9 @@
     <section class="card">
       <div class="step-n">Step 1</div>
       <h2>Flash the pattern</h2>
-      <p class="muted small">Start the Mac Sniffer first, then point this screen at the object for about 25 seconds. The screen will flash.</p>
+      <p class="muted small" id="step1Text">Start the Mac Sniffer first, then point this screen at the object for about 25 seconds. The screen will flash.</p>
       <button id="startBtn" class="btn primary">Start the pattern</button><p id="codeLine" class="mono small muted" style="margin:8px 0 0"></p>
-      <details>
+      <details id="macHow">
         <summary>How to record Wi-Fi on the Mac</summary>
         <ol class="muted">
           <li>Open Wireless Diagnostics → Window → Sniffer, pick the channel, press Start.</li>
@@ -59,8 +59,8 @@
     </section>
 
     <section class="card">
-      <div class="step-n">Step 2</div>
-      <h2>Drop the capture</h2>
+      <div class="step-n" id="step2n">Step 2</div>
+      <h2 id="step2h">Drop the capture</h2>
       <div id="drop" class="drop">
         Drop a .pcap or .pcapng file, or click to choose<br />
         <span class="small">Sniffer files are in Downloads → Sniffer captures</span>

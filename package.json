@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Finds hidden cameras by making them react.",
+  "description": "Check a room for hidden cameras.",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
@@ -15,7 +15,10 @@
     "android:setup": "sh tools/android-setup.sh",
     "apk": "sh tools/apk.sh",
     "gif": "node tools/gif.js",
-    "shots": "node tools/shots.js"
+    "shots": "node tools/shots.js",
+    "listener": "node tools/mac/listener.mjs",
+    "listener:demo": "node tools/mac/listener.mjs --demo",
+    "serve": "vite build && (node tools/mac/listener.mjs & vite preview --host --port 5173)"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",

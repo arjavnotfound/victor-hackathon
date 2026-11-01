@@ -7,6 +7,7 @@ import { getChallenge, saveChallenge, getSnapshots, saveWifiResult, getWifiResul
 import { drawTraffic, drawRssi, screenTheme } from './charts.js';
 import { buildReport } from './report.js';
 import { initPage } from './ui.js';
+import { hello, startScan, status, waitForResult } from './bridge.js';
 
 const $ = (id) => document.getElementById(id);
 initPage('Wi-Fi traffic');
@@ -25,16 +26,19 @@ worker.onmessage = (e) => {
     $('progress').textContent = '';
     showSummary(m.summary, 'No secret code yet, so this file can\'t be tested for a camera. Run Step 1 with the Sniffer recording, then drop the new file. Here is what is in this one:');
   }
-  if (m.type === 'done') {
-    result = m.result; selected = 0; $('progress').textContent = '';
-    // A short copy for the phone's Results page and report.
-    const top = result.devices[0];
-    saveWifiResult({ at: new Date().toISOString(), verdict: top ? top.verdict : 'none', mac: top?.mac || '', demo: isDemo, fileHash: m.result.fileHash });
-    saveAir({ capture: fromCapture(result) });
-    if (result.devices.length) showResult();
-    else showSummary(result.summary, 'Nothing in this file was streaming video during the test, so there is no camera to score. Check the Sniffer was on the right channel and recording while the screen flashed. Here is what it did catch:');
-  }
+  if (m.type === 'done') handleDone(m.result);
 };
+
+/** A finished analysis, from the file worker or from the listener. */
+function handleDone(res) {
+  result = res; selected = 0; $('progress').textContent = '';
+  // A short copy for the phone's Results page and report.
+  const top = result.devices[0];
+  saveWifiResult({ at: new Date().toISOString(), verdict: top ? top.verdict : 'none', mac: top?.mac || '', demo: isDemo, fileHash: res.fileHash });
+  saveAir({ capture: fromCapture(result), captureAt: new Date().toISOString() });
+  if (result.devices.length) showResult();
+  else showSummary(result.summary, 'Nothing in this file was streaming video during the test, so there is no camera to score. Check the Sniffer was on the right channel and recording while the screen flashed. Here is what it did catch:');
+}
 
 function showSession() {
   $('codeLine').textContent = session ? `Saved code: ${codeToString(session.code)}` : '';
@@ -55,28 +59,42 @@ function showSession() {
  */
 async function runChallenge() {
   const code = makeCode(12);
+  // Fullscreen and keep-awake are asked for right away, while the tap still
+  // counts, and never waited on: either can hang or be refused.
+  const fl = $('flicker');
+  fl.classList.add('on');
+  fl.style.background = '#777';
+  $('flickInfo').textContent = 'Getting ready…';
+  fl.requestFullscreen?.()?.catch(() => {});
+  let wake = null;
+  navigator.wakeLock?.request('screen').then((w) => { wake = w; }).catch(() => {});
   // The code is saved right away, so it is kept even if you skip the flashing.
   // Start time = when bit 1 begins (after the 3 s countdown).
-  session = { code, startMs: Date.now() + 3000, bitMs: BIT_MS };
+  // With the listener running, it records the air for us: it is told the
+  // code and the exact start, and gets a few seconds to start listening.
+  const listener = await hello();
+  const lead = listener ? 6000 : 3000;
+  session = { code, startMs: Date.now() + lead, bitMs: BIT_MS };
   saveChallenge(session);
   isDemo = false;
   showSession();
+  if (listener) {
+    try {
+      await startScan({ mode: 'flash', code, startMs: session.startMs, bitMs: BIT_MS, seconds: Math.ceil((lead + code.length * BIT_MS) / 1000) + 5 });
+    } catch (e) { $('progress').textContent = e.message; fl.classList.remove('on'); return; }
+  }
 
-  const fl = $('flicker');
-  fl.classList.add('on');
-  try { await fl.requestFullscreen?.(); } catch { /* fine without */ }
-  let wake = null;
-  try { wake = await navigator.wakeLock?.request('screen'); } catch { /* fine */ }
   let skipped = false;
   $('skipBtn').onclick = (e) => { e.stopPropagation(); skipped = true; };
 
-  for (let c = 3; c > 0 && !skipped; c--) {
-    fl.style.background = '#777'; $('count').textContent = c;
+  // Count down to the agreed start time.
+  while (!skipped && Date.now() < session.startMs) {
+    fl.style.background = '#777'; $('count').textContent = Math.ceil((session.startMs - Date.now()) / 1000);
     $('flickInfo').textContent = 'Point the screen at the object.';
-    await new Promise((r) => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 100));
   }
   $('count').textContent = '';
-  if (!skipped) {
+  if (!skipped && !listener) {
     session.startMs = Date.now(); // exact moment bit 1 starts
     saveChallenge(session);
     showSession();
@@ -98,8 +116,18 @@ async function runChallenge() {
   });
   fl.classList.remove('on');
   $('flickBar').style.width = '0';
-  try { await document.exitFullscreen?.(); } catch { /* fine */ }
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   wake?.release?.();
+  if (listener && !skipped) {
+    $('progress').textContent = 'Reading the result…';
+    try {
+      const r = await waitForResult((st) => { if (st?.phase === 'analysing') $('progress').textContent = 'Checking every device against the pattern…'; });
+      fileName = r.file;
+      saveAir({ capture: r.sources, captureAt: r.at });
+      if (r.analysis) handleDone(r.analysis);
+    } catch (e) { $('progress').textContent = e.message; }
+    return;
+  }
   $('progress').textContent = skipped
     ? 'Skipped. The code is saved and will be used for the next file you drop.'
     : 'Done. Stop the Sniffer on the Mac and drop the capture file below.';
@@ -271,6 +299,18 @@ drop.addEventListener('drop', (e) => {
   if (e.dataTransfer.files[0]) analyzeFile(e.dataTransfer.files[0]);
 });
 $('startBtn').addEventListener('click', runChallenge);
+
+// With the listener running, recording and reading the air happen on their
+// own, so the recording steps and the file drop are not shown.
+hello().then(async (h) => {
+  if (!h) return;
+  // A test that finished while this page was away (it reloads when the
+  // connection comes back) is shown here.
+  const st = await status().catch(() => null);
+  if (st?.phase === 'done' && st.result?.analysis && st.result.at > (getWifiResult()?.at || '')) handleDone(st.result.analysis);
+  $('step1Text').textContent = 'Point this screen at the object, 0.5 to 2 m away, for about 30 seconds. It will flash.';
+  for (const id of ['macHow', 'step2n', 'step2h', 'drop']) $(id).hidden = true;
+});
 $('demoBtn').addEventListener('click', runDemo);
 $('reportBtn').addEventListener('click', makeReport);
 window.addEventListener('resize', drawCharts);

@@ -2,5 +2,8 @@
   "appId": "app.teamvictor.check",
   "appName": "Glint",
   "webDir": "dist",
-  "android": { "backgroundColor": "#f2f2f7" }
+  "android": {
+    "backgroundColor": "#000000",
+    "allowMixedContent": true
+  }
 }

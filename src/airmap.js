@@ -17,7 +17,7 @@
 // strongest sign of all is the flash test (analysis.js): its upload rising
 // and falling with the screen flashes.
 
-import { freqToChannel } from './pcap.js';
+import { freqToChannel, KIND_DATA, KIND_ETH } from './pcap.js';
 import { lookupVendor } from './oui.js';
 import { nameReason } from './network.js';
 import { median } from './analysis.js';
@@ -114,6 +114,39 @@ export function fromCapture(result) {
     return {
       id: d.mac, name: d.vendor && d.vendor !== 'Unknown' ? d.vendor : d.mac, mac: d.mac, freq: d.freq || 0,
       rssi: d.meanRssi, sec, verdict: d.verdict, from: 'capture',
+    };
+  });
+}
+
+/**
+ * Sources from a plain listen (no flash test): upload per second for every
+ * transmitter that sent at least `minFrames` data frames, with its signal
+ * and channel. Same idea as the flash test, minus the code.
+ */
+export function fromTraffic(cap, { minFrames = 30 } = {}) {
+  const n = cap.t.length;
+  if (!n) return [];
+  let t0 = Infinity, t1 = -Infinity;
+  for (let i = 0; i < n; i++) { if (cap.t[i] < t0) t0 = cap.t[i]; if (cap.t[i] > t1) t1 = cap.t[i]; }
+  const secs = Math.max(1, Math.ceil(t1 - t0));
+  const per = new Map();
+  for (let i = 0; i < n; i++) {
+    const s = cap.src[i];
+    if (s < 0) continue;
+    let d = per.get(s);
+    if (!d) { d = { sec: new Array(secs).fill(0), data: 0, rssi: 0, rn: 0, freq: 0 }; per.set(s, d); }
+    if (!Number.isNaN(cap.rssi[i])) { d.rssi += cap.rssi[i]; d.rn++; }
+    if (cap.freq[i]) d.freq = cap.freq[i];
+    if ((cap.kind[i] === KIND_DATA && cap.payload[i]) || cap.kind[i] === KIND_ETH) {
+      d.sec[Math.min(secs - 1, Math.floor(cap.t[i] - t0))] += cap.len[i];
+      d.data++;
+    }
+  }
+  return [...per.entries()].filter(([, d]) => d.data >= minFrames).map(([s, d]) => {
+    const mac = cap.macs[s], v = lookupVendor(mac);
+    return {
+      id: mac, mac, name: v.vendor !== 'Unknown' ? v.vendor : mac, freq: d.freq,
+      rssi: d.rn ? d.rssi / d.rn : null, sec: d.sec, from: 'capture',
     };
   });
 }

@@ -8,6 +8,15 @@ import { resolve } from 'node:path';
 // NO_SSL=1 serves plain http on port 5180 (localhost only needs no certificate;
 // used for automated screenshots and the laptop browser pane).
 const noSsl = !!process.env.NO_SSL;
+// /api goes to the Glint listener (tools/mac/listener.mjs) on this machine.
+// When it is not running, answer "no listener" instead of a 502 error.
+const listener = {
+  target: 'http://127.0.0.1:5174',
+  configure: (proxy) => proxy.on('error', (err, req, res) => {
+    res.writeHead?.(200, { 'Content-Type': 'application/json' });
+    res.end?.('{"ok":false}');
+  }),
+};
 // Relative base so the same build works at the GitHub Pages sub-path
 // (/victor-hackathon/) and inside the Android app.
 export default defineConfig({
@@ -37,7 +46,8 @@ export default defineConfig({
       workbox: { globPatterns: ['**/*.{html,js,css,woff2,png,svg}'], navigateFallback: null },
     }),
   ],
-  server: { host: true, port: noSsl ? 5180 : 5173 },
+  server: { host: true, port: noSsl ? 5180 : 5173, proxy: { '/api': listener } },
+  preview: { proxy: { '/api': listener } },
   worker: { format: 'es' },
   build: {
     rollupOptions: {

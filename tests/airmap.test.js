@@ -49,3 +49,18 @@ describe('Wi-Fi map', () => {
     expect(countLevels(map).suspicious).toBeGreaterThanOrEqual(1);
   });
 });
+
+import { fromTraffic } from '../src/airmap.js';
+
+describe('plain listen', () => {
+  it('finds the streaming devices without a flash code and marks the camera', () => {
+    const code = makeCode(12, seeded(5));
+    const cap = parseCapture(makeDemoCapture({ code, startMs: 1.7e12, seed: 4 }).buffer);
+    const map = buildMap(fromTraffic(cap));
+    expect(map.length).toBeGreaterThanOrEqual(3);
+    const cam = map.find((s) => s.mac === DEMO_DEVICES.camera);
+    expect(cam.sec.length).toBeGreaterThan(20);
+    expect(cam.level).not.toBe('safe');
+    expect(cam.channel).toBe(6);
+  });
+});

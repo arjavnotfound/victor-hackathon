@@ -7,7 +7,16 @@
 - **Lens sweep:** one tap starts back-to-back scans until tapped again; the round shutter's ring fills with the flash code; a spot seen in two scans in a row is confirmed on its own.
 - **3D Wi-Fi map** (`map.html`, `src/map-page.js`, maths in `src/airmap.js`, three.js): each source plotted by frequency (across), upload (up, log scale) and signal (depth). Green / amber / red from the upload pattern: steady upload like live video, regular keyframe bursts every 2-5 s, the flash test result, camera-like name, camera Wi-Fi chip (chip only counts on top of a steady upload). Drag, pinch, pan; tap a dot or a colour chip for channel, band, signal, upload now (replay), upload over time and the reasons. Red dots pulse and carry labels. In the Android app the map scans nearby Wi-Fi on opening. `map.html?demo=1` runs the real analysis on the simulated room.
 - **Limit (honest):** a phone cannot see other devices' upload. Upload colours need the laptop traffic test; nearby networks from the phone are coloured by name, chip and signal only, and say so.
-- Tests: 72 unit, 13 e2e, all green.
+- **Listener** (`tools/mac/listener.mjs`, phone side `src/bridge.js`): the phone starts Wi-Fi traffic scans; nobody records or uploads a file by hand.
+  - Why the Sniffer: command-line monitor mode gets 0 frames on this Mac (MAC_ENV_REPORT.md), so the listener presses Start/Stop in the Wireless Diagnostics Sniffer, waits for the new capture in `/var/tmp`, runs the same analysis code as the app (`pcap.js`, `analysis.js`, `airmap.js`) and keeps the result.
+  - API: `GET /api/hello`, `POST /api/scan {mode: 'listen'|'flash', seconds, code?, startMs?, bitMs?}`, `GET /api/status` (phase idle/capturing/waiting/analysing/done/error + result), `GET /api/latest` (newest capture read as a listen). One scan at a time.
+  - The Mac leaves the Wi-Fi network while the Sniffer runs, so the phone keeps retrying `/api/status` until it answers. Pages pick up a finished result when they reopen or reload.
+  - Phone: the Wi-Fi map has "Listen to the air" (30 s, radar countdown); the traffic test tells the listener the code and exact start time (6 s lead), flashes, then shows the result. When the listener is reachable, the recording steps and file drop are hidden. In the Android app, starting a lens sweep also starts a 40 s background listen.
+  - Browser: the dev and preview servers pass `/api` to port 5174 (and answer `{ok:false}` when it is off). Android app: set the address in Settings > Listener address (plain http allowed in the app for this).
+  - **One-time setup:** System Settings > Privacy & Security > Accessibility > turn on Terminal, so the script may press the Sniffer's buttons. Without it, press Start/Stop by hand; the file is still picked up and analysed. Open the Sniffer once and pick the room Wi-Fi's channel.
+  - **Run:** `npm run serve` (build, listener and https preview on 5173; phone opens `https://<mac-ip>:5173`). `npm run listener:demo` runs a simulated room.
+  - Not verified: the real Sniffer button presses (Accessibility was not granted here, and starting the Sniffer would cut this Mac's Wi-Fi). Tested with the simulated room only, in the browser and with `tests/listener.test.js`.
+- Tests: 74 unit, 13 e2e, all green.
 - Next: try the lens sweep on a real phone against a real phone camera at 30 cm and 1-2 m; decide on a one-command live feed from the Mac so the traffic test needs no manual capture and upload.
 
 ## Decisions (1 Nov polish)

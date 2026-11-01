@@ -5,6 +5,7 @@ import { findings } from './report-content.js';
 import { markSvg } from './icons.js';
 import { $, initPage, wireSheetButtons, closeSheet, when } from './ui.js';
 import { LANGS, getLang, setLang } from './strings.js';
+import { listenerBase, setListenerBase } from './bridge.js';
 
 initPage('');
 
@@ -43,9 +44,14 @@ $('settingsBody').innerHTML = `
   <div class="label">Language</div>
   <div class="seg" role="radiogroup" aria-label="Language">${Object.entries(LANGS).map(([k, v]) => `
     <label><input type="radio" name="lang" value="${k}" ${getLang() === k ? 'checked' : ''}><span lang="${k}">${v}</span></label>`).join('')}</div>
+  <div class="label">Traffic scans</div>
+  <ul class="group"><li><label class="field"><span>Listener address</span><input id="listenerIn" inputmode="url" autocomplete="off" placeholder="http://192.168.1.5:5174"></label></li></ul>
+  <p class="footer">Only needed in the Android app. In the browser it is found on its own.</p>
   <div class="label">This phone</div>
   <ul class="group"><li><button class="row" id="clearAll" type="button"><span class="row-text bad-text">Clear results</span></button></li></ul>
   <p class="footer">Removes saved spots and which checks ran. Tuned settings stay.</p>`;
+$('listenerIn').value = listenerBase();
+$('listenerIn').addEventListener('change', (e) => setListenerBase(e.target.value));
 $('clearAll').addEventListener('click', () => {
   clearSession();
   showLast();

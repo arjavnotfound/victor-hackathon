@@ -15,6 +15,8 @@ import {
 import { addSnapshot, getSnapshots, markCheck, savePhone, getChecks } from './store.js';
 import { openCamera, setTorch, lockForTorch, phoneInfo } from './camera.js';
 import { $, isDemo, initPage, wireSheetButtons } from './ui.js';
+import { Capacitor } from '@capacitor/core';
+import { hello, startScan } from './bridge.js';
 import {
   makeGrabber, attachStream, screenMapper, drawSpots, sizeOverlay, snapshot, buildSliders, showSupport, startCoverage, applySettings,
 } from './cam-page.js';
@@ -287,10 +289,22 @@ $('scanBtn').addEventListener('click', async () => {
   // spot that shows up in two scans in a row is confirmed on its own.
   sweeping = true;
   setShutter('on');
+  listenAlong();
   while (sweeping && (await scan())) { /* next scan */ }
   sweeping = false;
   setShutter('idle');
 });
+
+/**
+ * In the Android app, a lens sweep also starts a Wi-Fi listen in the
+ * background; its result shows up on the Wi-Fi map. Only in the app: a page
+ * served by the listener's own machine would lose its connection meanwhile.
+ */
+async function listenAlong() {
+  if (!Capacitor.isNativePlatform() || isDemo) return;
+  const h = await hello();
+  if (h?.phase && !['capturing', 'waiting', 'analysing'].includes(h.phase)) startScan({ mode: 'listen', seconds: 40 }).catch(() => {});
+}
 
 /** The round button: start camera, sweep, stop. Text sits under it for screen readers too. */
 function setShutter(state) {
