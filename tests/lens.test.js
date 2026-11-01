@@ -233,3 +233,17 @@ describe('ignored spots', () => {
     expect(merged[0]).toMatchObject({ x: 28, area: 7, reason: 'shape' });
   });
 });
+
+import { isIsolated } from '../src/lens.js';
+
+describe('isolation test', () => {
+  it('passes a lone dot and fails a dot that sits on a thin slanted streak', () => {
+    const w = 60, h = 40;
+    const lone = new Float32Array(w * h); lone[20 * w + 30] = 50;
+    expect(isIsolated(lone, w, h, 30, 20, 50)).toBe(true);
+    const streak = new Float32Array(w * h);
+    for (let i = -15; i <= 15; i++) streak[Math.round(20 + i * 0.75) * w + 30 + i] = 45; // 1 px line, about 37 degrees
+    streak[20 * w + 30] = 50;
+    expect(isIsolated(streak, w, h, 30, 20, 50)).toBe(false);
+  });
+});

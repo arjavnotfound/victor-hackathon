@@ -113,6 +113,7 @@ await step('results show the saved spot, and the PDF is real and carries the fin
   assert.match(await text('#summary'), /1 thing worth a closer look/);
   assert.equal(await page.locator('.spot img').count(), 1);
   assert.match(await text('#checks'), /Lens check/);
+  assert.match(await text('#checks'), /Directions covered[^]*\d+ of 12/); // demo turns the heading slowly
   assert.match(await text('#checks'), /Night-vision lights[^]*back camera/);
   await shot('results');
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#reportBtn')]);

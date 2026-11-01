@@ -6,6 +6,8 @@
 // bytes (adding the hash would change the bytes), so we hash the contents
 // instead. Change a word or a photo and the fingerprint no longer matches.
 
+import { coverageText, countSeen } from './coverage.js';
+
 export const LIMITS =
   'This check does not cover everything. It can miss cameras whose lens does not reflect the torch at this angle, ' +
   'cameras with no night-vision lights, and recorders that do not use Wi-Fi.';
@@ -58,6 +60,10 @@ export function checkRows(checks = {}, wifi = null, snaps = [], whenFn = (t) => 
   rows.push(wifi
     ? { key: 'wifi', name: 'Wi-Fi traffic', done: true, status: wf ? closer(1, 'device') : 'Nothing found', detail: whenFn(wifi.at), tone: wf ? 'warn' : 'ok' }
     : { key: 'wifi', name: 'Wi-Fi traffic', done: false, status: 'Not done', detail: 'Laptop step', tone: 'grey' });
+  const seen = checks.coverage?.seen;
+  if (seen && countSeen(seen)) {
+    rows.push({ key: 'coverage', name: 'Directions covered', done: true, status: `${countSeen(seen)} of 12`, detail: 'Where you pointed the phone', tone: 'info' });
+  }
   return rows;
 }
 
@@ -73,7 +79,9 @@ export function checkLines(checks = {}, wifi = null) {
   const net = nw
     ? `Yes, ${nw.nearby} nearby networks and ${nw.devices} devices (${when(nw.at)})${nw.flagged?.length ? `, ${nw.flagged.length} worth a closer look` : ''}`
     : 'No';
-  return [['Lens check', lens], ['IR check', ir], ['Network check', net], ['Wi-Fi check', wf]];
+  const lines = [['Lens check', lens], ['Night-vision lights', ir], ['Network check', net], ['Wi-Fi check', wf]];
+  if (countSeen(checks.coverage?.seen)) lines.push(['Directions covered', `${coverageText(checks.coverage.seen)} This shows where the phone pointed, not that a direction is clear.`]);
+  return lines;
 }
 
 /**

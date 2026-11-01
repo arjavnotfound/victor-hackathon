@@ -16,7 +16,7 @@ import { addSnapshot, getSnapshots, markCheck, savePhone, getChecks } from './st
 import { openCamera, setTorch, lockForTorch, phoneInfo } from './camera.js';
 import { $, isDemo, initPage, wireSheetButtons } from './ui.js';
 import {
-  makeGrabber, attachStream, screenMapper, drawSpots, sizeOverlay, snapshot, buildSliders, showSupport, applySettings,
+  makeGrabber, attachStream, screenMapper, drawSpots, sizeOverlay, snapshot, buildSliders, showSupport, startCoverage, applySettings,
 } from './cam-page.js';
 
 initPage('Lens check');
@@ -310,4 +310,5 @@ $('recalBtn').addEventListener('click', () => {
 });
 window.addEventListener('resize', redraw);
 showSaved();
+startCoverage($('cover'), () => busy, { demo: isDemo });
 if (isDemo) setStatus('Demo camera: a simulated room. Tap Start camera, then Scan twice.');

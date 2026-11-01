@@ -2,7 +2,8 @@
 
 import { $ } from './ui.js';
 import { describeSupport } from './camera.js';
-import { getSettings, saveSettings } from './store.js';
+import { getSettings, saveSettings, getChecks, markCheck } from './store.js';
+import { headingOf, addHeading, emptyCoverage, countSeen, coverageText } from './coverage.js';
 
 // Analysis size: the long side is 320 px. Small enough to run every frame on
 // a phone, big enough that a lens a few metres away is still 1-3 pixels.
@@ -138,4 +139,39 @@ export function showSupport(list, cam, locked) {
   const rows = describeSupport(cam.caps, cam.track.getSettings?.() || {});
   if (locked) rows.push(['Locked for the scan', locked.length ? locked.join(', ') : 'nothing']);
   list.innerHTML = rows.map(([k, v]) => `<li><div class="row"><span class="row-text">${k}</span><span class="row-value">${v}</span></div></li>`).join('');
+}
+
+/**
+ * Coverage ring: while `isActive()` is true (a scan is running), note which
+ * way the phone points (see coverage.js) and fill that slice of the ring.
+ * The ring stays hidden until the phone gives a compass reading, so phones
+ * without the sensor (and laptops) never show it. In demo mode a slowly
+ * turning heading is simulated so the ring can be seen on a laptop.
+ */
+export function startCoverage(el, isActive, { demo = false } = {}) {
+  let seen = getChecks().coverage?.seen || emptyCoverage();
+  const draw = () => {
+    const arcs = seen.map((on, i) => {
+      // 30 degree slice with a 4 degree gap; 0 = up (north).
+      const a0 = ((i * 30 + 2 - 90) * Math.PI) / 180, a1 = ((i * 30 + 28 - 90) * Math.PI) / 180;
+      const p = (a) => `${28 + 24 * Math.cos(a)} ${28 + 24 * Math.sin(a)}`;
+      return `<path d="M${p(a0)}A24 24 0 0 1 ${p(a1)}" style="stroke:${on ? 'var(--accent)' : 'rgba(255,255,255,.25)'}"/>`;
+    }).join('');
+    el.innerHTML = `<svg viewBox="0 0 56 56" fill="none" stroke-width="4" stroke-linecap="round" aria-hidden="true">${arcs}</svg><b>${countSeen(seen)}/12</b>`;
+    el.setAttribute('aria-label', coverageText(seen));
+  };
+  const note = (h) => {
+    if (el.hidden) { el.hidden = false; draw(); }
+    if (!isActive() || h == null) return;
+    const before = countSeen(seen);
+    addHeading(seen, h);
+    if (countSeen(seen) !== before) { markCheck('coverage', { seen }); draw(); }
+  };
+  el.hidden = true;
+  if (demo) {
+    setInterval(() => note((performance.now() / 50) % 360), 200);
+    return;
+  }
+  const type = 'ondeviceorientationabsolute' in window ? 'deviceorientationabsolute' : 'deviceorientation';
+  window.addEventListener(type, (e) => { const h = headingOf(e); if (h != null) note(h); });
 }

@@ -6,7 +6,7 @@ import { findBrightSpots, updateIrTracks, visibleFlagged, IR_DEFAULTS } from './
 import { addSnapshot, getSnapshots, markCheck, savePhone } from './store.js';
 import { openCamera, closeCamera, setTorch, phoneInfo } from './camera.js';
 import { $, isDemo, initPage, wireSheetButtons } from './ui.js';
-import { makeGrabber, attachStream, screenMapper, drawSpots, sizeOverlay, snapshot, buildSliders, showSupport } from './cam-page.js';
+import { makeGrabber, attachStream, screenMapper, drawSpots, sizeOverlay, snapshot, buildSliders, showSupport, startCoverage } from './cam-page.js';
 
 initPage('Night-vision lights');
 const video = $('video'), overlay = $('overlay');
@@ -129,4 +129,5 @@ wireSheetButtons();
 $('clearBtn').addEventListener('click', () => { tracks = []; shown = []; redraw(); });
 window.addEventListener('resize', redraw);
 showSaved();
+startCoverage($('cover'), () => running, { demo: isDemo });
 if (isDemo) setStatus('Demo camera: a simulated dark room with night-vision lights. Tap Start camera.');

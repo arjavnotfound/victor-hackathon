@@ -209,15 +209,19 @@ export function mergeRejects(rejects, dist = 12) {
  * surface also passes the local-contrast test, but part of its ring sits on
  * the same shiny surface and blinks just as hard. Those are dropped.
  */
-export function isIsolated(raw, w, h, cx, cy, peak, radius = 5) {
+export function isIsolated(raw, w, h, cx, cy, peak, radii = [4, 6]) {
+  // Two rings of 24 samples each: a thin streak (1-2 px, the edge of a
+  // spoon) slips between 12 samples on one ring, but not between 24 on two.
   let ringMax = -Infinity, ringMin = Infinity;
-  for (let k = 0; k < 12; k++) {
-    const a = (k / 12) * Math.PI * 2;
-    const x = Math.round(cx + radius * Math.cos(a)), y = Math.round(cy + radius * Math.sin(a));
-    if (x < 0 || y < 0 || x >= w || y >= h) continue;
-    const v = raw[y * w + x];
-    if (v > ringMax) ringMax = v;
-    if (v < ringMin) ringMin = v;
+  for (const radius of radii) {
+    for (let k = 0; k < 24; k++) {
+      const a = (k / 24) * Math.PI * 2;
+      const x = Math.round(cx + radius * Math.cos(a)), y = Math.round(cy + radius * Math.sin(a));
+      if (x < 0 || y < 0 || x >= w || y >= h) continue;
+      const v = raw[y * w + x];
+      if (v > ringMax) ringMax = v;
+      if (v < ringMin) ringMin = v;
+    }
   }
   if (ringMax === -Infinity) return true;
   return peak - ringMax >= 0.5 * (peak - ringMin);

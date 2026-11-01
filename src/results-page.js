@@ -22,12 +22,13 @@ function render() {
     : `Last check ${when(f.last)}.`;
   $('limits').textContent = LIMITS;
 
-  const ico = { lens: 'lens', ir: 'night', network: 'wifi', wifi: 'laptop' };
+  const ico = { lens: 'lens', ir: 'night', network: 'wifi', wifi: 'laptop', coverage: 'target' };
   $('checks').innerHTML = checkRows(checks, wifi, snaps, when).map((r) => `
     <li><div class="row"><span class="ico ${r.done ? '' : 'grey'}">${icon(ico[r.key])}</span>
       <span class="row-text"><span>${r.name}</span>${r.detail ? `<span class="row-sub">${esc(r.detail)}</span>` : ''}</span>
       <span class="row-value ${r.tone === 'warn' ? 'warn-text' : ''}">${r.tone === 'warn' ? 'Look closer' : r.status}</span></div></li>`).join('');
   stagger($('checks'));
+  $('coverNote').hidden = !checks.coverage;
 
   const netFlags = checks.network?.flagged || [];
   $('netSec').hidden = !netFlags.length;
