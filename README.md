@@ -1,9 +1,9 @@
 <p align="center"><img src="public/icon.svg" width="72" alt=""></p>
 
-<h1 align="center">VICTOR</h1>
+<h1 align="center">VIGIL</h1>
 
-<p align="center"><b>A 60-second privacy check before you settle into a room.</b><br>
-Your phone's torch blinks a secret pattern. A camera lens sends it straight back.</p>
+<p align="center"><b>Visual and Infrared Guard against hidden Lenses.</b><br>
+Five checks that find hidden cameras with the phone in your pocket.</p>
 
 <p align="center">
   <a href="https://arjavnotfound.github.io/victor-hackathon/"><b>Open on your phone</b></a> ·
@@ -18,7 +18,7 @@ Your phone's torch blinks a secret pattern. A camera lens sends it straight back
 <td valign="middle">
 <b>Try it now</b><br><br>
 <img src="docs/qr.png" width="140" alt="QR code for the app"><br><br>
-Scan with an Android phone,<br>then tap <b>Start the check</b>.<br><br>
+Scan with an Android phone,<br>then tap <b>Scan</b>.<br><br>
 <sub>The GIF uses the built-in demo camera,<br>not a real room.</sub>
 </td>
 </tr></table>
@@ -38,48 +38,50 @@ Tiny cameras are cheap and easy to hide. They turn up inside phone chargers, bul
 
 Looking by eye misses small lenses. And when someone does suspect a camera, there is rarely a record of what was checked, when, or what was found.
 
-## What it checks
+## The five checks
 
-| Check | What it looks for | Where it runs |
+| Check | What it looks for | Needs |
 |---|---|---|
-| **Lens check** | A tiny dot that blinks back in step with the torch's random pattern | Phone (web or app) |
-| **IR check** | Night-vision lights your eyes cannot see, in a dark room | Phone (web or app) |
-| **Network check** | Wi-Fi names and devices on your Wi-Fi that look like cameras | Android app only |
-| **Wi-Fi check** | A device whose traffic rises and falls with a flashing screen | Laptop + Mac Wi-Fi capture |
-| **Report** | A PDF of what was checked, with a fingerprint so later changes show | Phone or laptop |
+| **Lens** | A tiny dot that blinks back in step with the torch's random pattern | Phone with a torch |
+| **Night vision** | Infrared lights your eyes cannot see, in a dark room | Any phone camera |
+| **Networks** | Camera hotspot names, camera chip makers, and devices that answer like a video stream | Android app |
+| **Traffic test** | A device whose upload rises and falls with a flashing screen | A Wi-Fi recording |
+| **3D Wi-Fi map** | Every Wi-Fi source by band, upload and signal, coloured safe, unsure or suspicious | A Wi-Fi recording |
 
-Nothing is uploaded. There is no server and no account.
+Everything ends in **Results**: one plain answer, photos of each spot, and an evidence PDF with a fingerprint so later edits show. Camera frames never leave the phone. There is no account.
 
 <table><tr>
-<td><img src="docs/screenshots/home-light-390.png" width="190" alt="Home"></td>
-<td><img src="docs/screenshots/lens-found-dark-390.png" width="190" alt="Lens check"></td>
-<td><img src="docs/screenshots/network-demo-light-390.png" width="190" alt="Network check"></td>
-<td><img src="docs/screenshots/find-dark-390.png" width="190" alt="Find it"></td>
-<td><img src="docs/screenshots/hi-home-light-390.png" width="190" alt="Home in Hindi"></td>
+<td><img src="docs/screenshots/home.png" width="190" alt="Home"></td>
+<td><img src="docs/screenshots/lens.png" width="190" alt="Lens check, spot seen twice"></td>
+<td><img src="docs/screenshots/map.png" width="190" alt="3D Wi-Fi map"></td>
+<td><img src="docs/screenshots/map-details.png" width="190" alt="Details of a suspicious source"></td>
+<td><img src="docs/screenshots/network.png" width="190" alt="Network check"></td>
 </tr></table>
 
 ## How it works, in short
 
-**The secret pattern.** Every scan picks a new random on/off pattern. A shiny screw, a lamp or a TV standby light cannot copy a pattern it has never seen. A lens answers without meaning to.
+**The secret pattern.** Every scan picks a new random on/off pattern. A shiny screw, a lamp or a TV standby light cannot copy a pattern it has never seen. A camera answers without meaning to.
 
-**Lens check.** A lens focuses light onto a flat sensor, and some of it bounces straight back toward the light, like a cat's eyes in headlights. The torch sits next to the phone's camera, so a hidden lens shows up as a small dot that turns on and off with the torch. The app checks every pixel against the pattern and keeps only small dots that follow it. A dot found once is a *possible reflection*. Found again after you move a little, it becomes *seen twice, worth a closer look*.
+**Lens.** A lens focuses light onto a flat sensor, and some of it bounces straight back toward the light, like a cat's eyes in headlights. The torch blinks the pattern; every frame is lined up against hand shake; every pixel is compared with the pattern. Only small, round, isolated dots that follow it are kept. Found once, a dot is a *possible reflection*. Found again after you move, it is *seen twice, worth a closer look*. One tap sweeps until you stop.
 
-Before the first scan the app blinks the torch a few times to measure how slow this phone's torch is, and sets the pattern speed to match.
+**Night vision.** Many cameras have infrared lights for night recording. Phone cameras see them as purple-white dots. The app marks small bright dots that stay on or blink steadily.
 
-**IR check.** Many cameras have infrared lights for night recording. Phone cameras often see them as white or purple dots. The app looks for small bright dots that stay on or blink steadily.
+**Networks (Android app).** Lists nearby Wi-Fi networks and devices on your Wi-Fi, and flags camera-style names, camera chip makers, video ports (like 554) and devices that answer camera discovery. **Find it** turns signal strength into warmer and colder.
 
-**Network check (Android app).** Lists nearby Wi-Fi networks and devices on your Wi-Fi, and flags ones that use camera-style names, camera-chip makers, video ports (like 554) or answer camera discovery requests.
+**Traffic test.** A streaming camera sends more data when the picture changes. The screen flashes a random code at the object while the Wi-Fi around it is recorded. The device whose upload follows the code is the camera; 200 random codes are tried too, so a lucky match does not count.
 
-**Wi-Fi check (laptop).** A streaming camera sends more data when the picture changes. The laptop screen flashes a random code at the object while a Mac records Wi-Fi packet sizes and times. The device whose traffic follows the code is the camera. The maths is in [docs/how-it-works.md](docs/how-it-works.md).
+**3D Wi-Fi map.** Every source in the recording becomes a dot: across is band and channel, up is upload, near is stronger signal. Red dots stand out with a ring; tap one for its channel, signal, live upload and the reason for its colour.
+
+The details, with the maths, are in [docs/how-it-works.md](docs/how-it-works.md).
 
 ## Honest limits
 
 - No app finds every camera. An empty result does not prove a room is clear.
 - The lens check needs a clear line of sight. A pinhole at a sharp angle or behind dark plastic may not reflect enough.
 - Torch control in a web page needs Android Chrome. iPhones do not allow it.
-- The network check cannot see cameras on mobile data, on another Wi-Fi, or recording to a memory card. Some Wi-Fi networks hide devices from each other.
-- The Wi-Fi check needs a Mac, listens to one channel at a time, and only finds cameras that stream.
-- A "worth a closer look" result is a reason to look closely, not proof.
+- The network check cannot see cameras on mobile data, on another Wi-Fi, or recording to a memory card.
+- The traffic test and map need a Wi-Fi recording, listen to one channel at a time, and only see cameras that stream.
+- "Worth a closer look" is a reason to look closely, not proof.
 
 If you do find something, the app has a page on what to do next: [help.html](help.html).
 
@@ -88,25 +90,26 @@ If you do find something, the app has a page on what to do next: [help.html](hel
 ```bash
 npm install
 npm run dev        # https://localhost:5173, phone on the same Wi-Fi: https://<mac-ip>:5173
+npm run serve      # demo day: builds, serves, and starts the Wi-Fi helper on a Mac
 npm test           # maths and scoring tests
-npm run e2e        # clicks through every screen in Chromium, saves docs/screenshots
+npm run e2e        # clicks through every screen in Chromium
 npm run deploy     # tests, builds and publishes to GitHub Pages
 ```
 
-Add `?demo=1` to any phone page to use a simulated camera on a laptop.
+Add `?demo=1` to any page to use a simulated room on a laptop. `npm run listener:demo` simulates the Wi-Fi helper.
 
 ### Android app
 
 ```bash
 npm run android:setup   # once: Java and the Android SDK into ~/Android, no Android Studio, no sudo
-npm run apk             # builds VICTOR.apk
+npm run apk             # builds VIGIL.apk
 ```
 
 The app is the same web code inside a small Android shell, plus a native plugin for the network check (`android/app/src/main/java/app/teamvictor/check/NetworkCheckPlugin.java`).
 
 ### Stack
 
-Vite and plain JavaScript, no framework, no backend. Camera and torch through `getUserMedia`, analysis in a Web Worker, jsPDF for the report, Web Crypto for the fingerprint, Capacitor for the Android app, vitest and Playwright for tests.
+Vite and plain JavaScript, no framework. Camera and torch through `getUserMedia`, analysis in a Web Worker, three.js for the 3D map, jsPDF for the report, Web Crypto for the fingerprint, Capacitor for the Android app, vitest and Playwright for tests.
 
 ## Team VICTOR
 

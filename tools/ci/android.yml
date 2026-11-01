@@ -1,4 +1,4 @@
-# Builds the Android app on GitHub and attaches VICTOR.apk to a Release.
+# Builds the Android app on GitHub and attaches VIGIL.apk to a Release.
 # To turn on: move this file to .github/workflows/ (needs a GitHub login with
 # the "workflow" permission: gh auth refresh -s workflow), then push a tag:
 #   git tag v1.0.1 && git push --tags
@@ -25,7 +25,7 @@ jobs:
       - run: npm test
       - run: npx vite build && npx cap sync android
       - run: cd android && ./gradlew assembleDebug --quiet
-      - run: cp android/app/build/outputs/apk/debug/app-debug.apk VICTOR.apk
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk VIGIL.apk
       - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
-        with: { files: VICTOR.apk }
+        with: { files: VIGIL.apk }

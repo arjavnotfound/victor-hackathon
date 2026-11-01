@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 // NO_SSL=1 serves plain http on port 5180 (localhost only needs no certificate;
 // used for automated screenshots and the laptop browser pane).
 const noSsl = !!process.env.NO_SSL;
-// /api goes to the Glint listener (tools/mac/listener.mjs) on this machine.
+// /api goes to the VIGIL listener (tools/mac/listener.mjs) on this machine.
 // When it is not running, answer "no listener" instead of a 502 error.
 const listener = {
   target: 'http://127.0.0.1:5174',
@@ -28,8 +28,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Glint',
-        short_name: 'Glint',
+        name: 'VIGIL',
+        short_name: 'VIGIL',
         description: 'Check a room for hidden cameras.',
         start_url: './',
         scope: './',

@@ -9,3 +9,9 @@ playwright-report/
 demo/
 .claude/
 *.apk
+
+# Local notes, not part of the app
+CLAUDE.md
+MORNING_TEST.md
+MAC_ENV_REPORT.md
+PROGRESS.md

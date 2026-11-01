@@ -1,4 +1,4 @@
-# How VICTOR works
+# How VIGIL works
 
 A short guide for the team. No maths needed.
 
@@ -44,7 +44,7 @@ The front camera of many phones blocks less infrared than the back camera, so it
 
 A camera that streams video over Wi-Fi has to send more data when its picture changes a lot, and less when the picture is still.
 
-The laptop screen flickers in a random pattern of "busy" and "still" in front of the object, for about 25 seconds. At the same time, the Mac records the Wi-Fi traffic in the air around it (only the size and time of each packet; the content is encrypted and we do not read it). Then we drop that recording into the page. If one device's traffic rises and falls with our pattern, it is very likely watching the screen.
+The laptop screen flickers in a random pattern of "busy" and "still" in front of the object, for about 25 seconds. At the same time, the Mac records the Wi-Fi traffic in the air around it (only the size and time of each packet; the content is encrypted and we do not read it). The Mac picks up that recording on its own and analyses it, or you can drop the file into the page by hand. If one device's traffic rises and falls with our pattern, it is very likely watching the screen.
 
 ## How the app adjusts to your phone
 
@@ -85,3 +85,14 @@ It cannot see a camera on another Wi-Fi, on mobile data, or one that only record
 ## The report and its fingerprint
 
 The PDF report lists what was checked, the saved spots with photos, and the phone used. At the end is a fingerprint: a long code worked out from everything in the report. If anyone changes a word or a photo, the code will no longer match.
+
+## Recording Wi-Fi on a Mac
+
+The traffic test and the 3D map need a recording of the Wi-Fi in the air, not just your own network. On a Mac, the only way that works is the built-in Sniffer (Wireless Diagnostics → Window → Sniffer). The command-line monitor mode (`tcpdump -I`) gets no frames on recent Macs.
+
+`npm run serve` starts the app and a small helper (`tools/mac/listener.mjs`). When the phone starts a scan, the helper presses Start and Stop in the Sniffer, picks up the new file from `/var/tmp`, runs the same analysis code as the app and hands the result back to the phone.
+
+- Once: System Settings → Privacy & Security → Accessibility → turn on Terminal, so the helper can press the Sniffer's buttons. Without it, press them by hand; the file is still picked up.
+- Pick the channel the suspected camera uses. The Sniffer listens to one channel at a time.
+- While the Sniffer runs, the Mac leaves the Wi-Fi network. The phone keeps asking until the Mac is back.
+- `npm run listener:demo` runs the helper with a simulated room, for trying the flow without a Sniffer.

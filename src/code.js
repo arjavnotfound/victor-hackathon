@@ -1,6 +1,6 @@
 // Secret random codes.
 //
-// The whole idea of VICTOR is that we send a pattern nobody can predict and
+// The whole idea of VIGIL is that we send a pattern nobody can predict and
 // check who answers in the same pattern. So the code must come from a real
 // random source (crypto), and be fresh for every test.
 

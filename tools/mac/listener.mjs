@@ -1,4 +1,4 @@
-// Glint listener: lets the phone app run a Wi-Fi traffic scan.
+// VIGIL listener: lets the phone app run a Wi-Fi traffic scan.
 //
 //   node tools/mac/listener.mjs          real scans (needs the Sniffer, see below)
 //   node tools/mac/listener.mjs --demo   simulated room, for trying the flow
@@ -9,7 +9,7 @@
 // result for the phone to collect.
 //
 // Why the Sniffer: it is the only way this Mac can hear other devices' Wi-Fi
-// (the command-line monitor mode gets 0 frames, see MAC_ENV_REPORT.md).
+// (the command-line monitor mode gets 0 frames, see docs/how-it-works.md).
 // Pressing its Start and Stop buttons from a script needs a one-time
 // permission: System Settings > Privacy & Security > Accessibility, turn on
 // the Terminal app. Without it, press Start and Stop in the Sniffer window by
@@ -198,4 +198,4 @@ const server = http.createServer(async (req, res) => {
 });
 
 function log(t) { console.log(`${new Date().toLocaleTimeString()}  ${t}`); }
-server.listen(PORT, '0.0.0.0', () => log(`Glint listener on port ${PORT}${DEMO ? ' (simulated room)' : ''}`));
+server.listen(PORT, '0.0.0.0', () => log(`VIGIL listener on port ${PORT}${DEMO ? ' (simulated room)' : ''}`));

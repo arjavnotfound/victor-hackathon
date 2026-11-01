@@ -29,13 +29,11 @@ await page.evaluate(() => localStorage.clear());
 await page.reload();
 await grab(1200);
 await page.click('#scanBtn');
-await page.waitForFunction(() => document.querySelector('#scanBtn').textContent === 'Scan');
-for (let k = 0; k < 3; k++) {
-  await page.click('#scanBtn');
-  await record(() => !document.querySelector('#scanBtn').disabled);
-  await grab(900);
-  if (/Seen twice/.test(await page.locator('#status').innerText())) break;
-}
+await page.waitForFunction(() => document.querySelector('#scanBtn').dataset.state === 'idle');
+// One tap sweeps: scans repeat until a spot is seen twice.
+await page.click('#scanBtn');
+await record(() => /Seen twice/.test(document.querySelector('#status').textContent));
+await page.click('#scanBtn');
 await grab(2500);
 
 const gif = GIFEncoder();

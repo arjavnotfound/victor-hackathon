@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds VICTOR.apk (debug-signed, installs on any Android phone that allows
+# Builds VIGIL.apk (debug-signed, installs on any Android phone that allows
 # "install unknown apps"). Needs `npm run android:setup` once.
 #   npm run apk
 set -e
@@ -9,5 +9,5 @@ export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/sdk}"
 npx vite build
 npx cap sync android
 (cd android && ./gradlew assembleDebug --quiet)
-cp android/app/build/outputs/apk/debug/app-debug.apk VICTOR.apk
-echo "Built VICTOR.apk"
+cp android/app/build/outputs/apk/debug/app-debug.apk VIGIL.apk
+echo "Built VIGIL.apk"
