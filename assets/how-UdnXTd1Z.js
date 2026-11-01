@@ -1,0 +1,1 @@
+import{a as e}from"./ui-BkHH1fLz.js";/* empty css            */e(`How it works`);
