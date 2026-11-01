@@ -6,14 +6,16 @@
   <meta name="theme-color" content="#000000" />
   <link rel="icon" href="icon.svg" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <title>VICTOR · Lens check</title>
-  <script type="module" crossorigin src="./assets/lens-CYnAIe4R.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/ui-DCiHzPIO.js">
-  <link rel="modulepreload" crossorigin href="./assets/code-Dygr-lMv.js">
-  <link rel="modulepreload" crossorigin href="./assets/store-Clq8ImiC.js">
+  <title>VIGIL · Lens check</title>
+  <script type="module" crossorigin src="./assets/lens-Cp-Elag_.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/ui-Czs4FoOb.js">
+  <link rel="modulepreload" crossorigin href="./assets/code-K2fHP6an.js">
+  <link rel="modulepreload" crossorigin href="./assets/store-DTxwol6_.js">
   <link rel="modulepreload" crossorigin href="./assets/coverage-CkpL5FMV.js">
-  <link rel="modulepreload" crossorigin href="./assets/cam-page-6Jvgc-c7.js">
-  <link rel="stylesheet" crossorigin href="./assets/app-tB7UwrZs.css">
+  <link rel="modulepreload" crossorigin href="./assets/cam-page-CC3hgY1v.js">
+  <link rel="modulepreload" crossorigin href="./assets/dist-CMedSjkm.js">
+  <link rel="modulepreload" crossorigin href="./assets/bridge-CwpSCiLE.js">
+  <link rel="stylesheet" crossorigin href="./assets/app-z4gYTdNl.css">
 <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
 <body class="cam">
   <div id="stage">
@@ -32,15 +34,14 @@
     </span>
   </header>
 
-  <p class="cam-status"><span id="status" role="status" aria-live="polite">Point the phone at the area and hold steady. Then move a little to the side and scan again.</span>
-    <span class="cam-hint" id="hint">Hold the phone between arm's length and about 1 metre from the area.</span></p>
+  <p class="cam-status"><span id="status" role="status" aria-live="polite">Point at a spot that could hide a camera</span>
+    <span class="cam-hint" id="hint">Arm's length to 1 metre away</span></p>
 
   <div class="cam-bottom">
-    <div class="progress" id="progress" aria-hidden="true"><i></i></div>
-    <button id="scanBtn" class="shutter">Start camera</button>
-    <div class="cam-row">
-      <button id="saveBtn" class="text-btn" disabled>Save this spot</button>
-      <a id="nextBtn" class="text-btn" href="ir.html">Next: night-vision</a>
+    <div class="cam-controls">
+      <button id="saveBtn" class="cam-side" disabled><span data-icon="pin"></span><span>Save</span></button>
+      <div class="shutter-wrap"><button id="scanBtn" class="shutter" data-state="start" aria-label="Start camera"></button><span class="shutter-label" id="shutterLabel">Start camera</span></div>
+      <a id="nextBtn" class="cam-side" href="ir.html"><span data-icon="night"></span><span>Next</span></a>
     </div>
     <p id="saved" class="cam-foot"></p>
   </div>

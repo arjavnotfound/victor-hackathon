@@ -3,61 +3,62 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="icon.svg" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <title>VICTOR</title>
-  <style>.hero{padding:20px 0 4px}.hero .large{margin-bottom:6px;font-size:34px}.hero .lede{max-width:30ch;font-size:17px}.qr{display:none}@media (width>=900px) and (hover:hover){.qr{background:var(--paper);border-radius:var(--radius);align-items:center;gap:16px;margin-top:24px;padding:16px;display:flex}.qr canvas{background:#fff;border-radius:8px;flex:none;width:112px;height:112px;padding:6px}.qr p{margin:0}}</style>
-  <script type="module" crossorigin src="./assets/main-wbPWqJq_.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/ui-DCiHzPIO.js">
-  <link rel="modulepreload" crossorigin href="./assets/store-Clq8ImiC.js">
+  <title>VIGIL</title>
+  <style>.home-top{padding:calc(10px + var(--top)) 16px 6px;justify-content:space-between;align-items:center;max-width:560px;margin:0 auto;display:flex}.brand{letter-spacing:-.03em;align-items:center;gap:10px;font-size:22px;font-weight:600;display:flex}.brand .m{width:22px;height:22px}.hero{grid-column:span 2;justify-content:space-between;min-height:330px;padding:20px}.hero .status{align-items:center;gap:12px;display:flex}.hero .status .ring{width:40px;height:40px;font-size:14px}.hero .glow{opacity:.9;width:150px;height:150px;margin:-75px 0 0 -75px;position:absolute;top:46%;left:50%}.hero .glow:after{content:"";background:radial-gradient(#ffffff1a,#0000 65%);border-radius:50%;position:absolute;inset:-50px}.hero .foot{z-index:1;justify-content:space-between;align-items:flex-end;gap:12px;display:flex}.hero h1{letter-spacing:-.04em;font-size:34px;font-weight:600;line-height:1.02}.tile.half{flex-direction:row;justify-content:flex-start;align-items:center;gap:12px;min-height:0;padding:16px 18px}.tile.half .t-ico{width:36px;height:36px}.tile.half .t-name{font-size:16px}.wide .t-text{flex:1}.small-print{text-align:center;color:var(--faint);margin:22px 0 0;font-size:13px}.qr{display:none}@media (width>=900px) and (hover:hover){.qr{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);align-items:center;gap:16px;margin-top:12px;padding:16px;display:flex}.qr canvas{background:#fff;border-radius:8px;flex:none;width:112px;height:112px;padding:6px}.qr p{margin:0}}</style>
+  <script type="module" crossorigin src="./assets/main-BN5ZyUJG.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/ui-Czs4FoOb.js">
+  <link rel="modulepreload" crossorigin href="./assets/store-DTxwol6_.js">
   <link rel="modulepreload" crossorigin href="./assets/coverage-CkpL5FMV.js">
   <link rel="modulepreload" crossorigin href="./assets/report-content-BwjYlJdS.js">
-  <link rel="stylesheet" crossorigin href="./assets/app-tB7UwrZs.css">
+  <link rel="modulepreload" crossorigin href="./assets/bridge-CwpSCiLE.js">
+  <link rel="stylesheet" crossorigin href="./assets/app-z4gYTdNl.css">
 <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
 <body>
-  <header class="nav">
-    <span></span><span class="nav-title" data-app-name>VICTOR</span>
-    <span class="nav-end"><button class="icon-btn" style="color:var(--accent)" data-sheet="settings" aria-label="Settings" aria-pressed="false"><span data-icon="more"></span></button></span>
+  <div class="splash" id="splash" hidden></div>
+  <header class="home-top">
+    <span class="brand"><span class="m" id="brandMark"></span><span data-app-name>VIGIL</span></span>
+    <button class="icon-btn" data-sheet="settings" aria-label="Settings" aria-pressed="false"><span data-icon="sliders"></span></button>
   </header>
 
-  <main class="page has-bar">
-    <section class="hero">
-      <h1 class="large" data-app-name>VICTOR</h1>
-      <p class="lede" id="tagline">A 60-second privacy check before you settle into a room.</p>
-      
-    </section>
+  <main class="page">
+    <div class="tiles">
+      <section class="tile hero" style="--i:0">
+        <div class="status">
+          <span class="ring" id="lastRing" style="--v:0"><span id="lastNum">–</span></span>
+          <span><span class="t-name" style="font-size:16px" id="lastText">No checks yet</span><span class="t-sub" id="lastWhen" style="display:block">Takes about a minute</span></span>
+        </div>
+        <div class="glow" id="heroMark"></div>
+        <div class="foot">
+          <h1>Scan<br>this room</h1>
+          <a class="orb" href="lens.html" id="scanOrb">Scan</a>
+        </div>
+      </section>
 
-    <section id="last" hidden>
-      <div class="label">Last check</div>
-      <ul class="group"><li><a class="row" href="results.html"><span class="ico ok" id="lastIco" data-icon="check"></span><span class="row-text"><span id="lastText"></span><span class="row-sub" id="lastWhen"></span></span><span class="chev" data-icon="chev"></span></a></li></ul>
-    </section>
+      <a class="tile" href="lens.html" style="--i:1"><span class="t-ico" data-icon="lens"></span><span><span class="t-name">Lens</span><span class="t-sub">Torch flash</span></span><span class="t-corner" data-icon="arrow"></span></a>
+      <a class="tile" href="ir.html" style="--i:2"><span class="t-ico" data-icon="night"></span><span><span class="t-name">Night vision</span><span class="t-sub">Lights off</span></span><span class="t-corner" data-icon="arrow"></span></a>
+      <a class="tile" href="map.html" style="--i:3"><span class="t-ico" data-icon="cube"></span><span><span class="t-name">Wi-Fi map</span><span class="t-sub">3D view</span></span><span class="t-corner" data-icon="arrow"></span></a>
+      <a class="tile" href="network.html" style="--i:4"><span class="t-ico" data-icon="wifi"></span><span><span class="t-name">Networks</span><span class="t-sub">Nearby devices</span></span><span class="t-corner" data-icon="arrow"></span></a>
 
-    <div class="label">Checks</div>
-    <ul class="group">
-      <li><a class="row" href="lens.html"><span class="ico" data-icon="lens"></span><span class="row-text"><span>Lens check</span><span class="row-sub">The torch blinks a pattern. A lens sends it back.</span></span><span class="chev" data-icon="chev"></span></a></li>
-      <li><a class="row" href="ir.html"><span class="ico" data-icon="night"></span><span class="row-text"><span>Night-vision lights</span><span class="row-sub">In the dark, find lights your eyes cannot see.</span></span><span class="chev" data-icon="chev"></span></a></li>
-      <li><a class="row" href="network.html"><span class="ico" data-icon="wifi"></span><span class="row-text"><span>Network</span><span class="row-sub">Wi-Fi names and devices that look like cameras.</span></span><span class="chev" data-icon="chev"></span></a></li>
-      <li><a class="row" href="challenge.html"><span class="ico" data-icon="laptop"></span><span class="row-text"><span>Wi-Fi traffic on a laptop</span><span class="row-sub">Flash a pattern and see which device reacts.</span></span><span class="chev" data-icon="chev"></span></a></li>
-    </ul>
-    <p class="footer">Start room check runs the lens check, then night-vision lights, then shows your results.</p>
+      <a class="tile wide" href="results.html" style="--i:5">
+        <span class="t-text"><span class="t-name">Results</span><span class="t-sub">Saved spots and report</span></span>
+        <span class="big-num" id="nSpots">0<small>spots</small></span>
+      </a>
+      <a class="tile half" href="challenge.html" style="--i:6"><span class="t-ico" data-icon="laptop"></span><span class="t-name">Traffic test</span></a>
+      <a class="tile half" href="help.html" style="--i:7"><span class="t-ico" data-icon="alert"></span><span class="t-name">Found one?</span></a>
+      <a class="tile half wide" href="how.html" style="--i:8"><span class="t-ico" data-icon="book"></span><span class="t-name">How it works</span></a>
+    </div>
 
-    <div class="label">More</div>
-    <ul class="group">
-      <li><a class="row" href="results.html"><span class="ico" data-icon="doc"></span><span class="row-text">Results and report</span><span class="chev" data-icon="chev"></span></a></li>
-      <li><a class="row" href="help.html"><span class="ico warn" data-icon="alert"></span><span class="row-text">If you found something</span><span class="chev" data-icon="chev"></span></a></li>
-      <li><a class="row" href="how.html"><span class="ico grey" data-icon="book"></span><span class="row-text">How it works</span><span class="chev" data-icon="chev"></span></a></li>
-    </ul>
-    <p class="footer">Everything runs on this phone. Nothing is uploaded.</p>
+    <p class="small-print">Runs on this phone. Nothing is uploaded.</p>
 
     <div class="qr" id="qrBox">
       <canvas id="qr"></canvas>
-      <p class="small muted">Open this on an Android phone: scan the code with the camera, then tap Start room check.</p>
+      <p class="small muted">Open this on an Android phone: scan the code with the camera, then tap Scan.</p>
     </div>
   </main>
-
-  <div class="bottom-bar"><a class="btn primary" href="lens.html">Start room check</a></div>
 
   <aside id="settings" class="sheet" hidden aria-label="Settings">
     <span class="grabber"></span>

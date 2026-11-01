@@ -3,23 +3,26 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="icon.svg" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <title>VICTOR · Network</title>
+  <title>VIGIL · Network</title>
   <style>.counts{grid-template-columns:1fr 1fr;display:grid}.counts>li{padding:14px 16px}.counts>li+li:before{display:none}.counts>li+li{border-left:.5px solid var(--line)}.counts b{font-variant-numeric:tabular-nums;letter-spacing:-.02em;font-size:28px;font-weight:600;display:block}.counts span{color:var(--muted);font-size:13px}.why{color:var(--muted);margin:4px 0 0;padding:0;font-size:15px;list-style:none}.why li:before{content:"·";margin-right:6px}.find{width:auto;min-height:34px;margin-top:10px;padding:6px 16px;font-size:15px;display:inline-flex}.spin{border:2px solid var(--fill);border-top-color:var(--accent);border-radius:50%;flex:none;width:18px;height:18px;animation:.8s linear infinite spin}@keyframes spin{to{transform:rotate(360deg)}}.bar{background:var(--fill);border-radius:2px;height:3px;margin:0 16px 10px;overflow:hidden}.bar i{background:var(--accent);width:0;height:100%;transition:width .3s linear;display:block}.find{align-self:flex-start;min-height:32px;margin-top:6px;padding:0;font-size:15px;font-weight:500}</style>
-  <script type="module" crossorigin src="./assets/network-xPagUywW.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/ui-DCiHzPIO.js">
+  <script type="module" crossorigin src="./assets/network-D8Zo1JHc.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/ui-Czs4FoOb.js">
   <link rel="modulepreload" crossorigin href="./assets/dist-CMedSjkm.js">
-  <link rel="modulepreload" crossorigin href="./assets/store-Clq8ImiC.js">
-  <link rel="stylesheet" crossorigin href="./assets/app-tB7UwrZs.css">
+  <link rel="modulepreload" crossorigin href="./assets/code-K2fHP6an.js">
+  <link rel="modulepreload" crossorigin href="./assets/airmap-CmgXrIFx.js">
+  <link rel="modulepreload" crossorigin href="./assets/store-DTxwol6_.js">
+  <link rel="modulepreload" crossorigin href="./assets/net-demo-CwLfNTg9.js">
+  <link rel="stylesheet" crossorigin href="./assets/app-z4gYTdNl.css">
 <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
 <body>
   <header class="nav"><a class="back" href="./"><span data-icon="back"></span>Home</a><span class="nav-title">Network</span><span class="nav-end"></span></header>
   <main class="page has-bar">
     <h1 class="large">Network</h1>
-    <p class="lede">Looks at Wi-Fi networks around you, and at devices on the Wi-Fi you joined, for ones that behave like cameras.</p>
+    <p class="lede">Networks and devices that act like cameras.</p>
 
     <section id="webOnly" hidden>
       <ul class="group"><li class="state">
@@ -43,6 +46,7 @@
         <div class="label" id="foundTitle"></div>
         <ul id="foundList" class="group"></ul>
         <p class="footer" id="notes"></p>
+        <a class="btn" href="map.html" style="margin-top:16px"><span data-icon="cube"></span>See them on the 3D map</a>
       </section>
 
       <ul class="group" id="idle">
