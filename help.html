@@ -10,43 +10,35 @@
   <title>VICTOR · If you found something</title>
   <link rel="stylesheet" href="src/app.css" />
   <style>
-    .group h3 { margin: 0; }
-    .group p, .group ul { margin: 2px 0 0; color: var(--muted); }
-    .group ul { padding-left: 20px; }
-    .call { display: flex; gap: 10px; margin-top: 12px; }
-    .call .btn, .call .btn + .btn { margin: 0; }
+    .steps .row { align-items: flex-start; }
+    .num { flex: none; width: 30px; height: 30px; border-radius: 7px; display: grid; place-items: center; background: var(--fill); color: var(--muted); font-weight: 600; font-size: 15px; }
+    .steps h3 { font-weight: 600; }
+    .steps p { margin: 2px 0 0; color: var(--muted); font-size: 15px; }
+    .call { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   </style>
 </head>
 <body>
-  <main class="page">
-    <div class="topbar"><a class="back" href="./"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Home</a><span class="brand" data-app-name>VICTOR</span></div>
-    <h1>If you found something</h1>
-    <p class="muted">Stay calm. A spot worth a closer look is not proof, but it is worth taking seriously.</p>
+  <header class="nav"><a class="back" href="./"><span data-icon="back"></span>Home</a><span class="nav-title">If you found something</span><span class="nav-end"></span></header>
+  <main class="page has-bar">
+    <h1 class="large">If you found something</h1>
+    <p class="lede">Stay calm. A spot worth a closer look is not proof, but it is worth taking seriously.</p>
 
-    <ul class="group">
-      <li><h3>1. Leave it where it is</h3>
-      <p>Do not touch or move the device. Take photos from where you are.</p>
-      </li>
-      <li><h3>2. Keep yourself safe</h3>
-      <p>If you feel unsafe, leave the room.</p>
-      </li>
-      <li><h3>3. Tell someone who can act</h3>
-      <ul>
-        <li>The warden, hotel or PG manager</li>
-        <li>Your college's Internal Complaints Committee</li>
-      </ul>
-      </li>
-      <li><h3>4. Emergency numbers</h3>
-      <p>Emergency: 112. Women's helpline: 181.</p>
-      <div class="call">
-        <a class="btn primary" href="tel:112">Call 112</a>
-        <a class="btn" href="tel:181">Call 181</a>
-      </div>
-      </li>
+    <div class="label">What to do</div>
+    <ul class="group steps">
+      <li><div class="row"><span class="num">1</span><span class="row-text"><h3>Leave it where it is</h3><p>Do not touch or move the device. Take photos from where you are.</p></span></div></li>
+      <li><div class="row"><span class="num">2</span><span class="row-text"><h3>Keep yourself safe</h3><p>If you feel unsafe, leave the room.</p></span></div></li>
+      <li><div class="row"><span class="num">3</span><span class="row-text"><h3>Save the report</h3><p>The PDF lists what was checked and when, with your saved photos.</p></span></div></li>
+      <li><div class="row"><span class="num">4</span><span class="row-text"><h3>Tell someone who can act</h3><p>The warden, hotel or PG manager, or your college's Internal Complaints Committee.</p></span></div></li>
     </ul>
 
-    <a class="btn" style="margin-top:28px" href="results.html">Back to results</a>
+    <div class="label">Emergency numbers</div>
+    <ul class="group">
+      <li><a class="row" href="tel:112"><span class="ico bad" data-icon="call"></span><span class="row-text"><span>Emergency</span><span class="row-sub">112</span></span><span class="chev" data-icon="chev"></span></a></li>
+      <li><a class="row" href="tel:181"><span class="ico bad" data-icon="call"></span><span class="row-text"><span>Women's helpline</span><span class="row-sub">181</span></span><span class="chev" data-icon="chev"></span></a></li>
+    </ul>
+    <p class="footer">Both numbers are free to call from any phone in India.</p>
   </main>
+  <div class="bottom-bar"><a class="btn primary" href="results.html">Open results and report</a></div>
   <script type="module">
     import { initPage } from './src/ui.js';
     initPage('If you found something');

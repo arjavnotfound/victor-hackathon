@@ -5,10 +5,10 @@ import { toGray } from './lens.js';
 import { findBrightSpots, updateIrTracks, visibleFlagged, IR_DEFAULTS } from './ir.js';
 import { addSnapshot, getSnapshots, markCheck, savePhone } from './store.js';
 import { openCamera, closeCamera, setTorch, phoneInfo } from './camera.js';
-import { $, isDemo, initPage } from './ui.js';
-import { makeGrabber, attachStream, screenMapper, drawSpots, sizeOverlay, snapshot, buildSliders, showSupport, wireSheets } from './cam-page.js';
+import { $, isDemo, initPage, wireSheetButtons } from './ui.js';
+import { makeGrabber, attachStream, screenMapper, drawSpots, sizeOverlay, snapshot, buildSliders, showSupport } from './cam-page.js';
 
-initPage('IR check');
+initPage('Night-vision lights');
 const video = $('video'), overlay = $('overlay');
 const octx = overlay.getContext('2d');
 const LABEL = 'Bright point, worth a closer look';
@@ -24,11 +24,11 @@ const settings = buildSliders($('sliders'), 'ir', IR_DEFAULTS, [
 let cam = null, grab = null, running = false, facing = 'environment';
 let tracks = [], shown = [];
 
-const style = () => ({ color: '#d3b4ff', text: 'Bright point' });
+const style = () => ({ color: '#ffb340', text: 'Bright point' });
 
 function setStatus(text, warn = false) {
   $('status').textContent = text;
-  $('status').className = 'cam-status' + (warn ? ' warn' : '');
+  $('status').parentElement.classList.toggle('warn', warn);
 }
 
 async function start() {
@@ -45,12 +45,14 @@ async function start() {
   markCheck('ir', { camera: facing === 'user' ? 'front' : 'back' });
   $('flipBtn').disabled = !!cam.demo;
   $('scanBtn').textContent = 'Pause';
-  setStatus('Turn off the room lights. Then slowly point the camera around the room. Many phones see more infrared with the front camera, so try both.');
+  setStatus('Turn off the room lights. Then slowly point the camera around the room.');
+  $('hint').textContent = 'Many phones see more infrared with the front camera. Try both with the flip button.';
   loop();
 }
 
 async function loop() {
   running = true;
+  document.body.classList.add('scanning');
   const gray = new Float32Array(grab.W * grab.H);
   let frames = 0, t0 = performance.now();
   while (running) {
@@ -61,6 +63,7 @@ async function loop() {
     const spots = findBrightSpots(gray, grab.W, grab.H, settings);
     updateIrTracks(tracks, spots, t, { ...settings, maxDist: grab.W * 0.06 });
     shown = visibleFlagged(tracks, t);
+    document.body.classList.toggle('scanning', !shown.length); // the pulse ring steps aside once something is circled
     redraw();
     $('saveBtn').disabled = !shown.length;
     if (++frames % 30 === 0) {
@@ -92,6 +95,7 @@ $('scanBtn').addEventListener('click', async () => {
     }
   } else if (running) {
     running = false;
+    document.body.classList.remove('scanning');
     $('scanBtn').textContent = 'Resume';
   } else {
     $('scanBtn').textContent = 'Pause';
@@ -104,7 +108,7 @@ $('flipBtn').addEventListener('click', async () => {
   facing = facing === 'environment' ? 'user' : 'environment';
   try { await start(); } catch (e) { setStatus('Could not switch camera: ' + e.message, true); }
   $('flipBtn').disabled = !!cam?.demo;
-  $('flipBtn').textContent = facing === 'user' ? 'Use back camera' : 'Use front camera';
+  $('flipBtn').setAttribute('aria-label', facing === 'user' ? 'Use back camera' : 'Use front camera');
   if (facing === 'user') setStatus('Front camera on. Turn the screen away from you and point it around the room.');
 });
 
@@ -121,7 +125,7 @@ $('saveBtn').addEventListener('click', () => {
   setStatus('Spot saved. It will be in your results and report.');
 });
 
-wireSheets();
+wireSheetButtons();
 $('clearBtn').addEventListener('click', () => { tracks = []; shown = []; redraw(); });
 window.addEventListener('resize', redraw);
 showSaved();

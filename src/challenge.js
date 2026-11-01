@@ -4,8 +4,10 @@ import { makeCode, codeToString } from './code.js';
 import { getChallenge, saveChallenge, getSnapshots, saveWifiResult, getWifiResult, getChecks, getPhone } from './store.js';
 import { drawTraffic, drawRssi, screenTheme } from './charts.js';
 import { buildReport } from './report.js';
+import { initPage } from './ui.js';
 
 const $ = (id) => document.getElementById(id);
+initPage('Wi-Fi traffic');
 const BIT_MS = 2000;
 const FLICKER_HZ = 5; // fast enough to change almost every video frame's content
 

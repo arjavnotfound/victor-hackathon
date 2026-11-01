@@ -14,9 +14,9 @@ import {
 } from './lens.js';
 import { addSnapshot, getSnapshots, markCheck, savePhone, getChecks } from './store.js';
 import { openCamera, setTorch, lockForTorch, phoneInfo } from './camera.js';
-import { $, isDemo, initPage } from './ui.js';
+import { $, isDemo, initPage, wireSheetButtons } from './ui.js';
 import {
-  makeGrabber, attachStream, screenMapper, drawSpots, sizeOverlay, snapshot, buildSliders, showSupport, wireSheets, applySettings,
+  makeGrabber, attachStream, screenMapper, drawSpots, sizeOverlay, snapshot, buildSliders, showSupport, applySettings,
 } from './cam-page.js';
 
 initPage('Lens check');
@@ -35,11 +35,11 @@ const settings = buildSliders($('sliders'), 'lens', LENS_DEFAULTS, [
 let cam = null, grab = null, busy = false, torchOk = false, calTried = false;
 let spots = [], tracks = [], scans = getChecks().lens?.scans || 0, lastCode = null;
 
-const style = (s) => ({ color: s.confirmed ? '#7fe0c6' : '#ffc27a', text: s.confirmed ? 'Seen twice' : 'Possible reflection' });
+const style = (s) => ({ color: s.confirmed ? '#ffb340' : 'rgba(255, 255, 255, .9)', text: s.confirmed ? 'Seen twice' : 'Possible reflection' });
 
 function setStatus(text, warn = false) {
   $('status').textContent = text;
-  $('status').className = 'cam-status' + (warn ? ' warn' : '');
+  $('status').parentElement.classList.toggle('warn', warn);
 }
 
 // ---------- camera ----------
@@ -55,7 +55,8 @@ async function start() {
   followHand();
   $('scanBtn').textContent = 'Scan';
   if (torchOk) setStatus('Point the phone at the area. Hold steady. Then move a little to the side and scan again.');
-  else setStatus('This phone or browser does not let the page use the torch, so the lens check cannot run here. The IR check still works.', true);
+  else setStatus('This phone or browser does not let the page use the torch, so the lens check cannot run here. The night-vision check still works.', true);
+  if (!torchOk) { $('scanBtn').textContent = 'Go to the night-vision check'; $('hint').hidden = true; }
 }
 
 // ---------- scan ----------
@@ -65,6 +66,8 @@ const nextFrame = () => new Promise((r) => requestAnimationFrame(r));
 async function scan() {
   busy = true;
   $('scanBtn').disabled = true;
+  document.body.classList.add('scanning');
+  $('hint').hidden = true;
   setStatus('Getting the camera ready…');
   const locked = await lockForTorch(cam);
   showSupport($('supportTable'), cam, locked);
@@ -82,6 +85,7 @@ async function scan() {
   // One slow read-back should not end the scan; most of the code failing should.
   const tooManyMisses = () => torchMisses > code.length / 2;
   setStatus('Scanning. Hold steady…');
+  $('hint').hidden = true;
 
   const t0 = performance.now() + 60;
   for (let i = 0; i < code.length && !tooManyMisses(); i++) {
@@ -104,12 +108,13 @@ async function scan() {
   }
   await setTorch(cam, false);
   drawBits(code, -1);
+  document.body.classList.remove('scanning');
   const fps = frames / ((code.length * (bitMs - settleMs)) / 1000);
   busy = false;
   $('scanBtn').disabled = false;
 
   if (tooManyMisses()) {
-    setStatus('The torch did not switch on. This phone or browser may not allow it. The IR check still works.', true);
+    setStatus('The torch did not switch on. This phone or browser may not allow it. The night-vision check still works.', true);
     return;
   }
   // Every bit needs a few frames, or the average for that bit is meaningless.
@@ -131,6 +136,10 @@ async function scan() {
   scans++;
   updateTracks(tracks, blobs, W * settings.trackDist);
   spots = blobs;
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const t = performance.now();
+    for (const b of spots) b.born = t;
+  }
   markCheck('lens', { scans });
   drawHeat(r, W, H);
   let maxR = 0;
@@ -220,7 +229,10 @@ async function followHand() {
 function redraw() {
   const dpr = sizeOverlay(overlay);
   octx.clearRect(0, 0, overlay.width, overlay.height);
-  if (grab) drawSpots(octx, spots, screenMapper(video, overlay, grab.W, grab.H), style, dpr);
+  const now = performance.now();
+  if (grab) drawSpots(octx, spots, screenMapper(video, overlay, grab.W, grab.H), style, dpr, now);
+  // Keep drawing while new circles are still fading in.
+  if (spots.some((s) => s.born && now - s.born < 300)) requestAnimationFrame(redraw);
 }
 
 function drawHeat(r, W, H) {
@@ -236,8 +248,10 @@ function drawHeat(r, W, H) {
   ctx.putImageData(img, 0, 0);
 }
 
+/** Thin bar that fills as the flash code plays; hidden when idle. */
 function drawBits(code, now) {
-  $('bits').innerHTML = code.map((b, i) => `<span class="${b ? 'one' : ''} ${i === now ? 'now' : ''}"></span>`).join('');
+  $('progress').classList.toggle('on', now >= 0);
+  $('progress').firstElementChild.style.width = now >= 0 ? `${((now + 1) / code.length) * 100}%` : '0';
 }
 
 function showSaved() {
@@ -257,7 +271,7 @@ $('scanBtn').addEventListener('click', async () => {
     }
     return;
   }
-  if (!torchOk) return setStatus('This phone or browser does not let the page use the torch. The IR check still works.', true);
+  if (!torchOk) { location.href = $('nextBtn').href; return; }
   scan();
 });
 
@@ -275,7 +289,7 @@ $('saveBtn').addEventListener('click', () => {
   setStatus('Spot saved. It will be in your results and report.');
 });
 
-wireSheets();
+wireSheetButtons();
 $('clearBtn').addEventListener('click', () => { tracks = []; spots = []; redraw(); $('saveBtn').disabled = true; });
 $('recalBtn').addEventListener('click', () => {
   applySettings('lens', settings, { calibrated: false });

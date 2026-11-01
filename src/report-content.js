@@ -20,6 +20,47 @@ export const WIFI_PLAIN = {
   none: 'No device in the capture was streaming during the test.',
 };
 
+/**
+ * How many things are worth a closer look across every check on this phone,
+ * and one calm sentence saying so. `snaps` = saved spots.
+ */
+export function findings(checks = {}, wifi = null, snaps = []) {
+  const net = checks.network?.flagged?.length || 0;
+  const wifiFlag = !!wifi && (wifi.verdict === 'camera' || wifi.verdict === 'maybe');
+  const count = snaps.length + net + (wifiFlag ? 1 : 0);
+  const any = !!(checks.lens || checks.ir || checks.network || wifi || snaps.length);
+  const times = [checks.lens?.at, checks.ir?.at, checks.network?.at, wifi?.at, ...snaps.map((s) => s.time)].filter(Boolean).sort();
+  const text = !any ? 'No checks yet on this phone.'
+    : count ? `${count} thing${count > 1 ? 's' : ''} worth a closer look.`
+    : NOTHING_FOUND;
+  return { count, any, text, last: times.at(-1) || null };
+}
+
+/**
+ * One row per check for the Results screen and the report:
+ * { key, name, done, status, detail, tone: 'ok' | 'warn' | 'grey' }.
+ * `whenFn` formats a time (passed in so this stays testable in node).
+ */
+export function checkRows(checks = {}, wifi = null, snaps = [], whenFn = (t) => t) {
+  const spots = (mode) => snaps.filter((s) => s.mode === mode).length;
+  const closer = (n, noun = 'spot') => `${n} ${noun}${n > 1 ? 's' : ''} worth a closer look`;
+  const row = (key, name, c, n, detail, noun) => (!c
+    ? { key, name, done: false, status: 'Not done', detail: '', tone: 'grey' }
+    : { key, name, done: true, status: n ? closer(n, noun) : 'Nothing found', detail, tone: n ? 'warn' : 'ok' });
+  const L = checks.lens, I = checks.ir, N = checks.network;
+  const rows = [
+    row('lens', 'Lens check', L, spots('lens'), L && `${L.scans || 0} scan${L.scans === 1 ? '' : 's'}`),
+    row('ir', 'Night-vision lights', I, spots('ir'), I && `${I.camera || 'back'} camera`),
+    row('network', 'Network', N, N?.flagged?.length || 0,
+      N && `${N.nearby} network${N.nearby === 1 ? '' : 's'}, ${N.devices} device${N.devices === 1 ? '' : 's'}`, 'item'),
+  ];
+  const wf = wifi && (wifi.verdict === 'camera' || wifi.verdict === 'maybe');
+  rows.push(wifi
+    ? { key: 'wifi', name: 'Wi-Fi traffic', done: true, status: wf ? closer(1, 'device') : 'Nothing found', detail: whenFn(wifi.at), tone: wf ? 'warn' : 'ok' }
+    : { key: 'wifi', name: 'Wi-Fi traffic', done: false, status: 'Not done', detail: 'Laptop step', tone: 'grey' });
+  return rows;
+}
+
 /** One plain line per check: [name, answer]. */
 export function checkLines(checks = {}, wifi = null) {
   const when = (iso) => new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });

@@ -10,63 +10,67 @@
   <title>VICTOR</title>
   <link rel="stylesheet" href="src/app.css" />
   <style>
-    .hero { padding: 48px 4px 28px; }
-    .hero .name { font-size: 13px; letter-spacing: .12em; font-weight: 600; color: var(--accent); margin-bottom: 14px; }
-    .step { display: flex; gap: 14px; align-items: flex-start; }
-    .step .n {
-      flex: none; width: 28px; height: 28px; border-radius: 50%; margin-top: 1px;
-      background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 15px;
-      display: grid; place-items: center;
-    }
-    .start { margin-top: 20px; }
+    .hero { padding: 20px 0 4px; }
+    .hero .large { font-size: 34px; margin-bottom: 6px; }
+    .hero .lede { font-size: 17px; max-width: 30ch; }
     .qr { display: none; }
     /* On a laptop, offer a QR code so judges can open the app on their phone. */
     @media (min-width: 900px) and (hover: hover) {
-      .qr { display: flex; gap: 16px; align-items: center; margin-top: 28px; }
-      .qr canvas { width: 120px; height: 120px; border-radius: 10px; background: #fff; padding: 8px; flex: none; }
+      .qr { display: flex; gap: 16px; align-items: center; margin-top: 24px; background: var(--paper); border-radius: var(--radius); padding: 16px; }
+      .qr canvas { width: 112px; height: 112px; border-radius: 8px; background: #fff; padding: 6px; flex: none; }
+      .qr p { margin: 0; }
     }
   </style>
 </head>
 <body>
-  <main class="page">
+  <header class="nav">
+    <span></span><span class="nav-title" data-app-name>VICTOR</span>
+    <span class="nav-end"><button class="icon-btn" style="color:var(--accent)" data-sheet="settings" aria-label="Settings" aria-pressed="false"><span data-icon="more"></span></button></span>
+  </header>
+
+  <main class="page has-bar">
     <section class="hero">
-      <div class="name" data-app-name>VICTOR</div>
-      <h1 id="tagline">A 60-second privacy check before you settle into a room.</h1>
+      <h1 class="large" data-app-name>VICTOR</h1>
+      <p class="lede" id="tagline">A 60-second privacy check before you settle into a room.</p>
+      
     </section>
 
-    <ul class="group">
-      <li><div class="step"><span class="n">1</span><span><b>Lens check.</b> <span class="muted">The torch blinks a secret pattern. A camera lens sends it straight back.</span></span></div></li>
-      <li><div class="step"><span class="n">2</span><span><b>IR check.</b> <span class="muted">In the dark, look for night-vision lights your eyes cannot see.</span></span></div></li>
-      <li><div class="step"><span class="n">3</span><span><b>Results.</b> <span class="muted">See what was checked and save a report.</span></span></div></li>
-    </ul>
+    <section id="last" hidden>
+      <div class="label">Last check</div>
+      <ul class="group"><li><a class="row" href="results.html"><span class="ico ok" id="lastIco" data-icon="check"></span><span class="row-text"><span id="lastText"></span><span class="row-sub" id="lastWhen"></span></span><span class="chev" data-icon="chev"></span></a></li></ul>
+    </section>
 
-    <a class="btn primary start" href="lens.html">Start the check</a>
+    <div class="label">Checks</div>
+    <ul class="group">
+      <li><a class="row" href="lens.html"><span class="ico" data-icon="lens"></span><span class="row-text"><span>Lens check</span><span class="row-sub">The torch blinks a pattern. A lens sends it back.</span></span><span class="chev" data-icon="chev"></span></a></li>
+      <li><a class="row" href="ir.html"><span class="ico" data-icon="night"></span><span class="row-text"><span>Night-vision lights</span><span class="row-sub">In the dark, find lights your eyes cannot see.</span></span><span class="chev" data-icon="chev"></span></a></li>
+      <li><a class="row" href="network.html"><span class="ico" data-icon="wifi"></span><span class="row-text"><span>Network</span><span class="row-sub">Wi-Fi names and devices that look like cameras.</span></span><span class="chev" data-icon="chev"></span></a></li>
+      <li><a class="row" href="challenge.html"><span class="ico" data-icon="laptop"></span><span class="row-text"><span>Wi-Fi traffic on a laptop</span><span class="row-sub">Flash a pattern and see which device reacts.</span></span><span class="chev" data-icon="chev"></span></a></li>
+    </ul>
+    <p class="footer">Start room check runs the lens check, then night-vision lights, then shows your results.</p>
 
     <div class="label">More</div>
     <ul class="group">
-      <li><a href="results.html"><span class="grow">Results</span><span class="hint">This phone</span><span class="chev" aria-hidden="true">&rsaquo;</span></a></li>
-      <li><a href="network.html"><span class="grow">Network check</span><span class="hint">Android app</span><span class="chev" aria-hidden="true">&rsaquo;</span></a></li>
-      <li><a href="help.html"><span class="grow">If you found something</span><span class="chev" aria-hidden="true">&rsaquo;</span></a></li>
-      <li><a href="challenge.html"><span class="grow">Wi-Fi check</span><span class="hint">Laptop step</span><span class="chev" aria-hidden="true">&rsaquo;</span></a></li>
+      <li><a class="row" href="results.html"><span class="ico" data-icon="doc"></span><span class="row-text">Results and report</span><span class="chev" data-icon="chev"></span></a></li>
+      <li><a class="row" href="help.html"><span class="ico warn" data-icon="alert"></span><span class="row-text">If you found something</span><span class="chev" data-icon="chev"></span></a></li>
+      <li><a class="row" href="how.html"><span class="ico grey" data-icon="book"></span><span class="row-text">How it works</span><span class="chev" data-icon="chev"></span></a></li>
     </ul>
-    <p class="foot">Runs on this phone. Nothing is uploaded.</p>
+    <p class="footer">Everything runs on this phone. Nothing is uploaded.</p>
 
     <div class="qr" id="qrBox">
       <canvas id="qr"></canvas>
-      <p class="muted small" style="margin:0">Open this on an Android phone: scan the code with the camera, then tap Start the check.</p>
+      <p class="small muted">Open this on an Android phone: scan the code with the camera, then tap Start room check.</p>
     </div>
   </main>
-  <script type="module">
-    import { initPage } from './src/ui.js';
-    import { TAGLINE } from './src/config.js';
-    initPage('');
-    document.getElementById('tagline').textContent = TAGLINE;
-    // QR code for the laptop view only; loaded lazily so phones never fetch it.
-    if (matchMedia('(min-width: 900px) and (hover: hover)').matches) {
-      import('qrcode').then(({ default: QR }) => QR.toCanvas(document.getElementById('qr'),
-        location.protocol === 'https:' ? location.href.split('?')[0] : 'https://arjavnotfound.github.io/victor-hackathon/',
-        { margin: 0, width: 120 }));
-    }
-  </script>
+
+  <div class="bottom-bar"><a class="btn primary" href="lens.html">Start room check</a></div>
+
+  <aside id="settings" class="sheet" hidden aria-label="Settings">
+    <span class="grabber"></span>
+    <div class="sheet-head"><span></span><h3>Settings</h3><button class="text-btn" data-close>Done</button></div>
+    <div id="settingsBody"></div>
+  </aside>
+
+  <script type="module" src="./src/home.js"></script>
 </body>
 </html>

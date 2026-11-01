@@ -72,11 +72,11 @@ export function summarize({ nearby = [], devices = [] }) {
   const flagged = [];
   for (const n of nearby) {
     const s = scoreNearby(n);
-    if (s.flag === 'closer') flagged.push({ kind: 'nearby', label: n.ssid || '(hidden name)', detail: describe('This Wi-Fi network', s.reasons) });
+    if (s.flag === 'closer') flagged.push({ kind: 'nearby', label: n.ssid || '(hidden name)', bssid: n.bssid, reasons: s.reasons, detail: describe('This Wi-Fi network', s.reasons) });
   }
   for (const d of devices) {
     const s = scoreDevice(d);
-    if (s.flag === 'closer') flagged.push({ kind: 'device', label: d.name || d.ip, detail: describe('This device', s.reasons) });
+    if (s.flag === 'closer') flagged.push({ kind: 'device', label: d.name || d.ip, reasons: s.reasons, detail: describe('This device', s.reasons) });
   }
   return { nearby: nearby.length, devices: devices.length, flagged };
 }

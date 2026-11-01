@@ -14,38 +14,51 @@
     <video id="video" playsinline muted autoplay></video>
     <canvas id="overlay"></canvas>
   </div>
+  <div class="aim" aria-hidden="true"></div>
 
   <header class="cam-top">
-    <a class="icon-btn" href="./" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
-    <span class="title">Lens check</span>
-    <button class="icon-btn" id="supportBtn" aria-pressed="false" aria-controls="support">Phone</button>
-    <button class="icon-btn" id="detailsBtn" aria-pressed="false" aria-controls="details">Details</button>
+    <a class="icon-btn" href="./" aria-label="Home"><span data-icon="back"></span></a>
+    <span class="cam-title">Lens check</span>
+    <span class="nav-end">
+      <button class="icon-btn" id="supportBtn" data-sheet="support" aria-pressed="false" aria-label="What this phone supports"><span data-icon="info"></span></button>
+      <button class="icon-btn" id="detailsBtn" data-sheet="details" aria-pressed="false" aria-label="Details"><span data-icon="sliders"></span></button>
+    </span>
   </header>
 
-  <p id="status" class="cam-status" role="status" aria-live="polite">Point the phone at the area. Hold steady. Then move a little to the side and scan again.</p>
+  <p class="cam-status"><span id="status" role="status" aria-live="polite">Point the phone at the area and hold steady. Then move a little to the side and scan again.</span>
+    <span class="cam-hint" id="hint">Hold the phone between arm's length and about 1 metre from the area.</span></p>
 
   <div class="cam-bottom">
-    <div id="bits" class="bits" aria-hidden="true"></div>
+    <div class="progress" id="progress" aria-hidden="true"><i></i></div>
     <button id="scanBtn" class="shutter">Start camera</button>
     <div class="cam-row">
-      <button id="saveBtn" class="ghost" disabled>Save this spot</button>
-      <a id="nextBtn" class="ghost" href="ir.html">Next: IR check</a>
+      <button id="saveBtn" class="text-btn" disabled>Save this spot</button>
+      <a id="nextBtn" class="text-btn" href="ir.html">Next: night-vision</a>
     </div>
     <p id="saved" class="cam-foot"></p>
   </div>
 
-  <aside id="support" class="sheet" hidden>
-    <h3>What this phone supports</h3>
-    <table id="supportTable"><tr><td>Start the camera first.</td></tr></table>
+  <aside id="support" class="sheet" hidden aria-label="What this phone supports">
+    <span class="grabber"></span>
+    <div class="sheet-head"><span></span><h3>This phone</h3><button class="text-btn" data-close>Done</button></div>
+    <ul class="group" id="supportTable"><li><div class="row"><span class="row-text muted">Start the camera first.</span></div></li></ul>
+    <p class="footer">What the browser lets this page control. The lens check needs the torch.</p>
   </aside>
 
-  <aside id="details" class="sheet" hidden>
-    <h3>Details</h3>
-    <div class="mono" id="debugInfo">No scan yet.</div>
-    <canvas id="heat" aria-label="Map of how closely each pixel followed the code"></canvas>
+  <aside id="details" class="sheet" hidden aria-label="Details">
+    <span class="grabber"></span>
+    <div class="sheet-head"><span></span><h3>Details</h3><button class="text-btn" data-close>Done</button></div>
+    <div class="label">Last scan</div>
+    <ul class="group"><li><div class="row"><span class="mono muted" id="debugInfo">No scan yet.</span></div></li></ul>
+    <canvas id="heat" style="width:100%;border-radius:12px;margin-top:8px;image-rendering:pixelated" aria-label="Map of how closely each pixel followed the code"></canvas>
+    <div class="label">Tuning</div>
     <div id="sliders"></div>
-    <button class="ghost" id="clearBtn" type="button">Forget spots from earlier scans</button>
-    <button class="ghost" id="recalBtn" type="button">Measure torch timing again</button>
+    <p class="footer">Changes are kept on this phone.</p>
+    <div class="label">Actions</div>
+    <ul class="group">
+      <li><button class="row" id="clearBtn" type="button"><span class="row-text" style="color:var(--accent)">Forget spots from earlier scans</span></button></li>
+      <li><button class="row" id="recalBtn" type="button"><span class="row-text" style="color:var(--accent)">Measure torch timing again</span></button></li>
+    </ul>
   </aside>
 
   <script type="module" src="./src/lens-page.js"></script>

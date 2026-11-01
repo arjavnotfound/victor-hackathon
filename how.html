@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="icon.svg" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <title>VICTOR · How it works</title>
+  <link rel="stylesheet" href="src/app.css" />
+  <style>
+    .text li { padding: 14px 16px; }
+    .text h3 { margin-bottom: 4px; }
+    .text p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.45; }
+  </style>
+</head>
+<body>
+  <header class="nav"><a class="back" href="./"><span data-icon="back"></span>Home</a><span class="nav-title">How it works</span><span class="nav-end"></span></header>
+  <main class="page">
+    <h1 class="large">How it works</h1>
+    <p class="lede">Every check sends something into the room and watches what answers back.</p>
+
+    <div class="label">Lens check</div>
+    <ul class="group text">
+      <li><h3>A lens sends light back</h3><p>A camera lens focuses light onto a flat sensor. Some of that light bounces straight back toward where it came from, like a cat's eyes in headlights. Your torch sits next to your camera, so a lens shows up as a small bright dot.</p></li>
+      <li><h3>A secret pattern</h3><p>The torch blinks a new random pattern every scan. A dot that blinks in exactly that pattern is reflecting your torch. A lamp, a screen or a standby light cannot copy a pattern it has never seen.</p></li>
+      <li><h3>A second look</h3><p>A lens dot is tiny. Big patches (a mirror, a glossy frame) are ignored. A dot found again after you move a little is marked "seen twice, worth a closer look".</p></li>
+    </ul>
+
+    <div class="label">Night-vision lights</div>
+    <ul class="group text">
+      <li><h3>Light you cannot see</h3><p>Many cameras have infrared lights for recording in the dark. Your eyes cannot see them, but a phone camera often shows them as white or purple dots. In a dark room, the app looks for small dots that stay on or blink steadily.</p></li>
+    </ul>
+
+    <div class="label">Network (Android app)</div>
+    <ul class="group text">
+      <li><h3>Names and devices</h3><p>The app lists nearby Wi-Fi networks and devices on your Wi-Fi. It looks for camera-style names, devices that use video ports, and devices that answer camera discovery messages. Each one comes with the reasons, in plain words.</p></li>
+    </ul>
+
+    <div class="label">The report</div>
+    <ul class="group text">
+      <li><h3>A fingerprint</h3><p>The PDF report carries a code worked out from everything in it, photos included. If anyone changes the report later, the code will no longer match.</p></li>
+    </ul>
+
+    <div class="label">Limits</div>
+    <ul class="group text">
+      <li><p>No app finds every camera. A lens behind dark plastic or at a sharp angle may not reflect enough. Cameras without night-vision lights, on mobile data, or recording to a memory card can stay hidden from these checks. A result worth a closer look is a reason to look closely, not proof.</p></li>
+    </ul>
+  </main>
+  <script type="module">
+    import { initPage } from './src/ui.js';
+    initPage('How it works');
+  </script>
+</body>
+</html>

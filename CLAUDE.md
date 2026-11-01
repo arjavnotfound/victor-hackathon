@@ -15,6 +15,7 @@
 - Commit after every working step, then push to the public repo `victor-hackathon`.
 - Never commit `node_modules`, `*.pcap`, `*.pcapng`, `dist`, `.DS_Store`, `.venv`.
 - Keep `PROGRESS.md` updated with what works and what is next.
+- Never add Co-Authored-By or any Claude/AI attribution to commits or PRs.
 
 ## Writing (UI text and docs)
 - Plain, normal language. Write for a hostel student, not an engineer.

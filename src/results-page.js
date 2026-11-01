@@ -1,46 +1,56 @@
-// Results: what was checked, the saved spots, a calm summary and the PDF report.
+// Results: one calm summary, every check on this phone, saved spots, and the PDF report.
 
 import { getChecks, getSnapshots, getWifiResult, getPhone, clearSession } from './store.js';
-import { checkLines, LIMITS, NOTHING_FOUND } from './report-content.js';
+import { checkRows, findings, LIMITS } from './report-content.js';
 import { buildReport } from './report.js';
-import { $, isDemo, initPage } from './ui.js';
+import { icon } from './icons.js';
+import { $, esc, isDemo, initPage, wireSheetButtons, closeSheet, stagger, when } from './ui.js';
 
 initPage('Results');
-const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+wireSheetButtons();
 
 function render() {
   const checks = getChecks(), wifi = getWifiResult(), snaps = getSnapshots();
-  const anyCheck = checks.lens || checks.ir || checks.network || wifi;
-  const wifiFlag = wifi && (wifi.verdict === 'camera' || wifi.verdict === 'maybe');
-  const netFlags = checks.network?.flagged || [];
+  const f = findings(checks, wifi, snaps);
 
-  if (!anyCheck && !snaps.length) $('summary').textContent = 'No checks yet on this phone.';
-  else if (snaps.length || wifiFlag || netFlags.length) {
-    const n = snaps.length + netFlags.length;
-    $('summary').textContent = n
-      ? `${n} thing${n > 1 ? 's' : ''} worth a closer look.`
-      : 'The Wi-Fi check found something worth a closer look.';
-  } else $('summary').textContent = NOTHING_FOUND;
+  const tone = !f.any ? 'grey' : f.count ? 'warn' : 'ok';
+  $('badge').className = `badge ${tone}`;
+  $('badge').innerHTML = icon(tone === 'warn' ? 'alert' : tone === 'ok' ? 'check' : 'doc');
+  $('summary').textContent = f.text;
+  $('summarySub').textContent = !f.any ? 'Start with the lens check. It takes about a minute.'
+    : f.count ? 'Look closely at the items below. If you are worried, see what to do next.'
+    : `Last check ${when(f.last)}.`;
   $('limits').textContent = LIMITS;
 
-  $('checks').innerHTML = checkLines(checks, wifi)
-    .map(([k, v]) => `<li><div class="pair"><span>${k}</span><span>${esc(v)}</span></div></li>`).join('');
+  const ico = { lens: 'lens', ir: 'night', network: 'wifi', wifi: 'laptop' };
+  $('checks').innerHTML = checkRows(checks, wifi, snaps, when).map((r) => `
+    <li><div class="row"><span class="ico ${r.done ? '' : 'grey'}">${icon(ico[r.key])}</span>
+      <span class="row-text"><span>${r.name}</span>${r.detail ? `<span class="row-sub">${esc(r.detail)}</span>` : ''}</span>
+      <span class="row-value ${r.tone === 'warn' ? 'warn-text' : ''}">${r.tone === 'warn' ? 'Look closer' : r.status}</span></div></li>`).join('');
+  stagger($('checks'));
 
+  const netFlags = checks.network?.flagged || [];
   $('netSec').hidden = !netFlags.length;
-  $('netList').innerHTML = netFlags.map((f) => `<li><b>${esc(f.label)}</b><span class="hint">${esc(f.detail)}</span></li>`).join('');
+  $('netList').innerHTML = netFlags.map((n) => `
+    <li><div class="row"><span class="ico warn">${icon('wifi')}</span>
+      <span class="row-text"><span>${esc(n.label)}</span><span class="row-sub">${esc(n.detail)}</span></span></div></li>`).join('');
+
   $('spotsSec').hidden = !snaps.length;
   $('spots').innerHTML = snaps.map((s) => `
-    <li class="spot">
-      ${s.image ? `<img src="${s.image}" alt="Saved spot from the ${s.mode === 'ir' ? 'IR' : 'lens'} check">` : ''}
-      <span>${esc(s.label || s.note || 'Saved spot')}</span>
-      <span class="hint">${s.mode === 'ir' ? 'IR check' : 'Lens check'} · ${new Date(s.time).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
-    </li>`).join('');
+    <li class="spot"><div class="row">
+      ${s.image ? `<img class="thumb" src="${s.image}" alt="Saved spot from the ${s.mode === 'ir' ? 'night-vision' : 'lens'} check">` : `<span class="thumb"></span>`}
+      <span class="row-text"><span>${esc(s.label || s.note || 'Saved spot')}</span>
+      <span class="row-sub">${s.mode === 'ir' ? 'Night-vision lights' : 'Lens check'} · ${when(s.time)}</span></span></div></li>`).join('');
+  stagger($('spots'));
+  $('reportBtn').disabled = !f.any;
 }
 
 $('reportBtn').addEventListener('click', async () => {
   $('reportBtn').disabled = true;
+  $('reportNote').hidden = false;
+  $('reportNote').textContent = 'Making the report…';
   try {
-    const { blob, hash, contentHash, name } = await buildReport({
+    const { blob, contentHash, name } = await buildReport({
       snapshots: getSnapshots(), checks: getChecks(), wifi: getWifiResult(), phone: getPhone(),
       // Say DEMO whenever the simulated camera or sample Wi-Fi data was used.
       demo: isDemo || /simulated/.test(getPhone()?.camera || '') || !!getWifiResult()?.demo,
@@ -52,21 +62,23 @@ $('reportBtn').addEventListener('click', async () => {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    $('reportNote').hidden = false;
-    $('reportNote').innerHTML = `Saved as ${name}. The fingerprint printed inside it:` +
-      `<span class="hash">${contentHash}</span><span class="hash">File SHA-256: ${hash}</span>`;
+    $('reportNote').textContent = 'Saved to your downloads.';
+    $('reportSec').hidden = false;
+    $('reportName').textContent = name;
+    $('reportHash').textContent = contentHash;
   } catch (e) {
-    $('reportNote').hidden = false;
-    $('reportNote').textContent = 'Could not make the report: ' + e.message;
+    $('reportNote').textContent = 'Could not make the report. Try again.';
+    console.warn(e);
   } finally {
     $('reportBtn').disabled = false;
   }
 });
 
-$('clearBtn').addEventListener('click', () => {
-  if (!confirm('Clear the saved spots and checks on this phone?')) return;
+$('clearYes').addEventListener('click', () => {
   clearSession();
+  $('reportSec').hidden = true;
   $('reportNote').hidden = true;
+  closeSheet();
   render();
 });
 

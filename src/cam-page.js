@@ -42,14 +42,20 @@ export function screenMapper(video, overlay, W, H) {
   return (ax, ay) => [offX + (ax * vw / W) * scale, offY + (ay * vh / H) * scale, (vw / W) * scale];
 }
 
-/** Circle and short label for each spot. `style(spot)` returns { color, text }. */
-export function drawSpots(ctx, spots, map, style, unit = 1) {
+/**
+ * Circle and short label for each spot. `style(spot)` returns { color, text }.
+ * A spot with `born` (a performance.now() time) fades and grows in over 300 ms.
+ */
+export function drawSpots(ctx, spots, map, style, unit = 1, now = 0) {
   ctx.lineWidth = 3 * unit;
-  ctx.font = `600 ${14 * unit}px Inter, system-ui, sans-serif`;
+  ctx.font = `600 ${13 * unit}px -apple-system, system-ui, Inter, Roboto, sans-serif`;
   const labelled = [];
   for (const s of spots.slice(0, 6)) {
     const [x, y, k] = map(s.x, s.y);
-    const rad = Math.max(20 * unit, Math.sqrt(s.area) * k * 2);
+    const age = s.born && now ? Math.min(1, (now - s.born) / 300) : 1;
+    const grow = 1 - (1 - age) ** 3;
+    ctx.globalAlpha = age;
+    const rad = Math.max(20 * unit, Math.sqrt(s.area) * k * 2) * (0.7 + 0.3 * grow);
     const { color, text } = style(s);
     ctx.strokeStyle = color;
     ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.stroke();
@@ -60,11 +66,14 @@ export function drawSpots(ctx, spots, map, style, unit = 1) {
     const tw = ctx.measureText(text).width;
     const lx = Math.min(x + rad + 6 * unit, ctx.canvas.width - tw - 12 * unit);
     const ly = x + rad + tw + 20 * unit > ctx.canvas.width ? y + rad + 18 * unit : y;
-    ctx.fillStyle = '#000000b3';
-    ctx.fillRect(lx - 5 * unit, ly - 13 * unit, tw + 10 * unit, 20 * unit);
+    ctx.fillStyle = 'rgba(0, 0, 0, .7)';
+    ctx.beginPath();
+    ctx.roundRect?.(lx - 7 * unit, ly - 14 * unit, tw + 14 * unit, 22 * unit, 11 * unit);
+    ctx.fill();
     ctx.fillStyle = color;
     ctx.fillText(text, lx, ly + 2 * unit);
   }
+  ctx.globalAlpha = 1;
 }
 
 /** Overlay canvas sized to the screen in device pixels. */
@@ -93,10 +102,10 @@ export function snapshot(video, spots, W, H, style) {
  */
 export function buildSliders(container, name, defaults, spec) {
   const settings = getSettings(name, defaults);
-  container.innerHTML = spec.map(([k, label, min, max, step]) =>
-    `<label>${label}: <b id="v_${k}">${settings[k]}</b>
-      <input type="range" id="s_${k}" min="${min}" max="${max}" step="${step}" value="${settings[k]}"></label>`).join('') +
-    '<button class="ghost" id="resetSettings" type="button">Reset to defaults</button>';
+  container.innerHTML = '<ul class="group">' + spec.map(([k, label, min, max, step]) =>
+    `<li><label class="slider-row"><span class="top"><span>${label}</span><b id="v_${k}">${settings[k]}</b></span>
+      <input type="range" id="s_${k}" min="${min}" max="${max}" step="${step}" value="${settings[k]}"></label></li>`).join('') +
+    '<li><button class="row" id="resetSettings" type="button"><span class="row-text" style="color:var(--accent)">Reset to defaults</span></button></li></ul>';
   for (const [k] of spec) {
     $('s_' + k).addEventListener('input', (e) => {
       settings[k] = Number(e.target.value);
@@ -122,22 +131,9 @@ export function applySettings(name, settings, values) {
   }
 }
 
-/** Fill the "What this phone supports" table. */
-export function showSupport(table, cam, locked) {
+/** Fill the "What this phone supports" list. */
+export function showSupport(list, cam, locked) {
   const rows = describeSupport(cam.caps, cam.track.getSettings?.() || {});
   if (locked) rows.push(['Locked for the scan', locked.length ? locked.join(', ') : 'nothing']);
-  table.innerHTML = rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
-}
-
-/** Phone and Details buttons each open their panel; only one is open at a time. */
-export function wireSheets() {
-  const pairs = [['supportBtn', 'support'], ['detailsBtn', 'details']].map(([b, s]) => [$(b), $(s)]);
-  for (const [btn, sheet] of pairs) {
-    btn.addEventListener('click', () => {
-      const open = sheet.hidden;
-      for (const [b, s] of pairs) { s.hidden = true; b.setAttribute('aria-pressed', 'false'); }
-      sheet.hidden = !open;
-      btn.setAttribute('aria-pressed', String(open));
-    });
-  }
+  list.innerHTML = rows.map(([k, v]) => `<li><div class="row"><span class="row-text">${k}</span><span class="row-value">${v}</span></div></li>`).join('');
 }

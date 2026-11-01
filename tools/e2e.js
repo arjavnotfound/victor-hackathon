@@ -1,18 +1,16 @@
-// End-to-end check in desktop Chromium + screenshots of every screen.
-//   npm run e2e          (runs the checks, writes docs/screenshots/*.png)
+// End-to-end check in desktop Chromium. Screenshots: tools/shots.js.
+//   npm run e2e
 // Builds the app, then serves the build under /victor-hackathon/ on plain
 // http://localhost, the same sub-path as GitHub Pages (localhost is a secure
 // context, so the camera works). Uses Chromium's fake camera.
 
 import { chromium } from 'playwright';
 import { build, preview } from 'vite';
-import { mkdirSync, readFileSync, copyFileSync } from 'node:fs';
+import { readFileSync, copyFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
 process.env.NO_SSL = '1';
 const PORT = 5181;
-const SHOTS = 'docs/screenshots';
-mkdirSync(SHOTS, { recursive: true });
 
 await build({ logLevel: 'error' });
 const server = await preview({ base: '/victor-hackathon/', preview: { port: PORT, strictPort: true, host: 'localhost' }, logLevel: 'error' });
@@ -31,21 +29,23 @@ let failed = 0;
 async function step(name, fn) {
   try { await fn(); console.log('ok  ', name); } catch (e) { failed++; console.log('FAIL', name, '\n     ', e.message); }
 }
-const shot = (name) => page.screenshot({ path: `${SHOTS}/${name}.png` });
+const shot = () => {}; // screenshots live in tools/shots.js
 const text = (sel) => page.locator(sel).innerText();
 
 await step('home loads and links through the flow', async () => {
   await page.goto(base + '/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  assert.match(await text('h1'), /60-second privacy check/);
-  await shot('home');
-  await page.click('text=Start the check');
+  assert.match(await text('#tagline'), /60-second privacy check/);
+  assert.equal(await page.locator('#last').isVisible(), false);
+  await page.click('.bottom-bar .btn');
   await page.waitForURL(/lens\.html/);
   await page.goto(base + '/?demo=1');
-  assert.match(await page.getAttribute('text=Start the check', 'href'), /lens\.html\?demo=1$/);
+  assert.match(await page.getAttribute('.bottom-bar .btn', 'href'), /lens\.html\?demo=1$/);
   await page.goto(base + '/help.html');
   assert.match(await text('h1'), /If you found something/);
+  await page.goto(base + '/how.html');
+  assert.match(await text('h1'), /How it works/);
   await shot('help');
 });
 
@@ -64,14 +64,17 @@ await step('lens check (demo) finds the simulated lens, seen twice, and saves it
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#scanBtn')).opacity), '1');
   await shot('lens-found');
   await page.click('#detailsBtn');
+  await page.waitForTimeout(350);
   assert.match(await text('#debugInfo'), /frames per bit/);
   assert.match(await text('#debugInfo'), /torch timing: \d+ ms to switch/); // calibration ran
   console.log('      ' + (await text('#debugInfo')).replace(/\n/g, ' | '));
-  await shot('lens-details');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(350);
   await page.click('#supportBtn');
+  await page.waitForTimeout(350);
   assert.match(await text('#supportTable'), /Torch/);
-  await shot('lens-phone');
-  await page.click('#supportBtn');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(350);
   await page.click('#saveBtn');
   assert.match(await text('#saved'), /1 spot saved/);
 });
@@ -89,10 +92,10 @@ await step('IR check opens the camera and switching cameras does not crash', asy
   await page.click('#scanBtn');
   await page.waitForFunction(() => document.querySelector('#scanBtn').textContent === 'Pause', null, { timeout: 10000 });
   await page.click('#flipBtn');
-  await page.waitForFunction(() => /back camera/.test(document.querySelector('#flipBtn').textContent), null, { timeout: 10000 });
+  await page.waitForFunction(() => /back camera/.test(document.querySelector('#flipBtn').getAttribute('aria-label')), null, { timeout: 10000 });
   assert.match(await text('#status'), /Front camera on/);
   await page.click('#flipBtn');
-  await page.waitForFunction(() => /front camera/.test(document.querySelector('#flipBtn').textContent), null, { timeout: 10000 });
+  await page.waitForFunction(() => /front camera/.test(document.querySelector('#flipBtn').getAttribute('aria-label')), null, { timeout: 10000 });
   await page.waitForTimeout(500);
 });
 
@@ -107,15 +110,15 @@ await step('results show the saved spot, and the PDF is real and carries the fin
   await page.goto(base + '/results.html');
   assert.match(await text('#summary'), /1 thing worth a closer look/);
   assert.equal(await page.locator('.spot img').count(), 1);
-  assert.match(await text('#checks'), /Lens check\s+Yes/);
-  assert.match(await text('#checks'), /IR check\s+Yes/);
+  assert.match(await text('#checks'), /Lens check/);
+  assert.match(await text('#checks'), /Night-vision lights[^]*back camera/);
   await shot('results');
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#reportBtn')]);
   const path = await dl.path();
   const pdf = readFileSync(path);
   if (process.env.PDF_OUT) copyFileSync(path, process.env.PDF_OUT);
   assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
-  const shown = (await text('#reportNote')).match(/[0-9a-f]{64}/)[0];
+  const shown = (await text('#reportHash')).match(/[0-9a-f]{64}/)[0];
   assert.ok(pdf.toString('latin1').includes(shown), 'content fingerprint printed in the PDF');
   console.log('      PDF', dl.suggestedFilename(), pdf.length, 'bytes, fingerprint', shown.slice(0, 12) + '…');
   await shot('results-report');
@@ -142,23 +145,8 @@ await step('network check in a browser points to the Android app', async () => {
   await page.goto(base + '/network.html');
   assert.equal(await page.isVisible('#webOnly'), true);
   assert.equal(await page.isVisible('#runBtn'), false);
+  assert.equal(await page.isVisible('#getApp'), true);
   await shot('network');
-});
-
-await step('dark mode screens', async () => {
-  const dark = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: 'dark', reducedMotion: 'reduce' });
-  const p = await dark.newPage();
-  p.on('pageerror', (e) => errors.push(`${p.url()}: ${e.message}`));
-  for (const [name, path] of [['home', '/'], ['help', '/help.html'], ['results', '/results.html'], ['network', '/network.html']]) {
-    await p.goto(base + path);
-    await p.screenshot({ path: `${SHOTS}/dark-${name}.png` });
-  }
-  await p.goto(base + '/challenge.html');
-  await p.click('#demoBtn');
-  await p.waitForSelector('#results:not([hidden])', { timeout: 30000 });
-  await p.locator('#results').scrollIntoViewIfNeeded();
-  await p.screenshot({ path: `${SHOTS}/dark-challenge-result.png` });
-  await dark.close();
 });
 
 await step('laptop home shows a QR code for phones', async () => {
@@ -166,7 +154,6 @@ await step('laptop home shows a QR code for phones', async () => {
   const p = await wide.newPage();
   await p.goto(base + '/');
   await p.waitForFunction(() => document.querySelector('#qr').width > 0, null, { timeout: 10000 });
-  await p.screenshot({ path: `${SHOTS}/laptop-home.png` });
   await wide.close();
 });
 

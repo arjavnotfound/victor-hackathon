@@ -10,23 +10,38 @@
   <title>VICTOR · Results</title>
   <link rel="stylesheet" href="src/app.css" />
   <style>
-    .summary { font-size: 22px; font-weight: 600; line-height: 1.3; margin: 4px 0 8px; letter-spacing: -.02em; }
-    .spot img { width: 100%; border-radius: 8px; display: block; margin-bottom: 8px; }
-    .actions { margin-top: 28px; }
+    .summary { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 24px 16px 20px; gap: 10px; }
+    .badge { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--ok-soft); color: var(--ok); }
+    .badge.warn { background: var(--warn-soft); color: var(--warn); }
+    .badge.grey { background: var(--fill); color: var(--muted); }
+    .badge svg { width: 30px; height: 30px; }
+    /* The mark draws itself in once. */
+    .badge path, .badge circle { stroke-dasharray: 80; stroke-dashoffset: 80; animation: draw .5s .15s var(--ease) forwards; }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+    @media (prefers-reduced-motion: reduce) { .badge path, .badge circle { stroke-dashoffset: 0; } }
+    .summary .title { margin: 0; }
+    .summary p { margin: 0; }
+    .thumb { width: 64px; height: 48px; border-radius: 6px; object-fit: cover; flex: none; background: var(--fill); }
+    .spot .row { align-items: center; }
+    .hash { font-family: var(--mono); font-size: 12px; word-break: break-all; color: var(--muted); }
   </style>
 </head>
 <body>
-  <main class="page">
-    <div class="topbar"><a class="back" href="./"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Home</a><span class="brand" data-app-name>VICTOR</span></div>
-    <h1>Results</h1>
-    <p id="summary" class="summary"></p>
-    <p id="limits" class="muted small"></p>
+  <header class="nav"><a class="back" href="./"><span data-icon="back"></span>Home</a><span class="nav-title">Results</span><span class="nav-end"></span></header>
+  <main class="page has-bar">
+    <h1 class="large">Results</h1>
 
-    <div class="label">What was checked</div>
+    <ul class="group"><li class="summary" id="summaryBox">
+      <span class="badge" id="badge"></span>
+      <h2 class="title" id="summary"></h2>
+      <p class="small muted" id="summarySub"></p>
+    </li></ul>
+
+    <div class="label">Checks on this phone</div>
     <ul id="checks" class="group"></ul>
 
     <section id="spotsSec" hidden>
-      <div class="label">Spots worth a closer look</div>
+      <div class="label">Saved spots</div>
       <ul id="spots" class="group"></ul>
     </section>
 
@@ -34,15 +49,36 @@
       <div class="label">From the network check</div>
       <ul id="netList" class="group"></ul>
     </section>
+    <p class="footer" id="limits"></p>
 
-    <div class="actions">
-      <button id="reportBtn" class="btn primary">Save report (PDF)</button>
-      <p id="reportNote" class="muted small" hidden></p>
-      <a class="btn" href="help.html">If you found something</a>
-      <a id="againBtn" class="btn" href="lens.html">Check again</a>
-      <button id="clearBtn" class="link-btn" type="button">Clear results and start fresh</button>
-    </div>
+    <section id="reportSec" hidden>
+      <div class="label">Last saved report</div>
+      <ul class="group"><li class="row"><span class="ico ok" data-icon="doc"></span><span class="row-text"><span id="reportName"></span><span class="hash" id="reportHash"></span></span></li></ul>
+      <p class="footer">This fingerprint is printed inside the PDF. If the report is changed later, it will no longer match.</p>
+    </section>
+
+    <div class="label">Next</div>
+    <ul class="group">
+      <li><a class="row" href="help.html"><span class="ico warn" data-icon="alert"></span><span class="row-text">If you found something</span><span class="chev" data-icon="chev"></span></a></li>
+      <li><a class="row" id="againBtn" href="lens.html"><span class="ico" data-icon="lens"></span><span class="row-text">Check another area</span><span class="chev" data-icon="chev"></span></a></li>
+    </ul>
+    <div class="center"><button id="clearBtn" class="text-btn danger" type="button" data-sheet="confirmClear">Clear results</button></div>
   </main>
+
+  <div class="bottom-bar">
+    <button id="reportBtn" class="btn primary"><span data-icon="share"></span>Save report (PDF)</button>
+    <p id="reportNote" class="caption" role="status" hidden></p>
+  </div>
+
+  <aside id="confirmClear" class="sheet" hidden aria-label="Clear results">
+    <span class="grabber"></span>
+    <div class="state">
+      <p>Remove the saved spots and the list of checks from this phone?</p>
+      <button class="btn primary" id="clearYes" style="background:var(--bad);color:#fff">Clear results</button>
+      <div class="center"><button class="text-btn" data-close>Cancel</button></div>
+    </div>
+  </aside>
+
   <script type="module" src="./src/results-page.js"></script>
 </body>
 </html>

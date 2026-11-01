@@ -16,23 +16,13 @@
 }
 
 body { font-size: 16px; }
-.wrap { max-width: 720px; margin: 0 auto; padding: 24px 20px 80px; }
-.top { display: flex; align-items: center; gap: 20px; max-width: 720px; margin: 0 auto; padding: 16px 20px 0; }
-.top .brand { font-size: 13px; }
-.top nav { display: flex; gap: 18px; margin-left: auto; font-size: 15px; }
-.top nav a { color: var(--muted); text-decoration: none; }
-.top nav a.on, .top nav a:hover { color: var(--accent); }
-.card { background: var(--paper); border-radius: 12px; padding: 20px; margin: 0 0 16px; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 0 16px 80px; }
+.nav.wide { max-width: 752px; margin: 0 auto; }
+.card { background: var(--paper); border-radius: var(--radius); padding: 20px; margin: 0 0 16px; }
+.card h2 { font-size: 22px; font-weight: 600; letter-spacing: -.015em; margin: 0 0 6px; }
+.card .btn { margin-top: 12px; }
 .small { font-size: 14px; }
 .mono { font-family: var(--mono); }
-button {
-  font: 500 15px var(--font); cursor: pointer; border: 0; border-radius: 10px; padding: 10px 16px;
-  background: var(--accent-soft); color: var(--accent); min-height: 44px;
-}
-button:disabled { opacity: .4; cursor: default; }
-button.primary, .big-btn { background: var(--accent); color: var(--accent-ink); }
-.big-btn { font-size: 17px; font-weight: 600; padding: 12px 32px; border-radius: 14px; }
-.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
 .pill.good { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
 .pill.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
@@ -41,10 +31,11 @@ table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 8px 6px; border-bottom: .5px solid var(--line); }
 th { color: var(--muted); font-weight: 500; }
 input[type=text], input[type=number] {
-  font: 14px var(--mono); background: var(--bg); color: var(--ink);
-  border: .5px solid var(--line); border-radius: 8px; padding: 9px 10px; width: 100%;
+  font: 15px var(--mono); background: var(--bg); color: var(--ink);
+  border: 0; border-radius: 10px; padding: 10px 12px; width: 100%; margin-top: 4px;
 }
 label { font-size: 13px; color: var(--muted); display: block; }
 details { margin: 12px 0 0; }
 summary { cursor: pointer; color: var(--accent); font-size: 15px; min-height: 32px; }
 canvas { max-width: 100%; display: block; }
+#skipBtn { min-height: 44px; padding: 0 16px; border-radius: 22px; font: 500 15px var(--font); cursor: pointer; }

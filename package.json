@@ -14,7 +14,8 @@
     "deploy": "npm test && vite build && gh-pages -d dist --nojekyll -m 'Deploy app'",
     "android:setup": "sh tools/android-setup.sh",
     "apk": "sh tools/apk.sh",
-    "gif": "node tools/gif.js"
+    "gif": "node tools/gif.js",
+    "shots": "node tools/shots.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",

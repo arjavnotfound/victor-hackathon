@@ -1,5 +1,16 @@
 # Progress
 
+## Decisions (1 Nov polish)
+- **Branch:** all of this is on the local branch `demo-polish`.
+- **Design:** one stylesheet (`src/app.css`) for every screen. Inset grouped lists, large titles that collapse into the nav bar, one filled button per screen in a bar at the bottom, everything else as plain text buttons. Light and dark follow the phone; camera screens are always dark.
+- **Icons:** one hand-drawn set in `src/icons.js` (24 px grid, 1.8 stroke). Pages ask for them with `data-icon`.
+- **Screen names:** "IR check" is now "Night-vision lights" everywhere a user sees it. The laptop step is "Wi-Fi traffic".
+- **New page `how.html`** (How it works), linked from Home.
+- **Screen transitions** use the browser's own page-to-page transition (Chrome). Browsers without it simply switch pages.
+- **Sheets** (phone support, details, settings, confirm clear) slide up over a dimmed backdrop and close by swipe down, tapping outside, Done or Escape.
+- **Screenshots** moved out of the e2e run into `npm run shots` (every screen and sheet, light and dark, 390 and 360 wide). `npm run e2e` only checks behaviour now.
+- **Dates** show as "today, 8:49 AM" instead of the full date.
+
 ## 1 Nov: real app, real address
 
 | Step | What | Status |
