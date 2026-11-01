@@ -1,5 +1,15 @@
 # Progress
 
+## 1 Nov (afternoon): Glint
+- **Name:** the app is now **Glint** (one constant in `src/config.js`; also the manifest, Android app name and icon). Team name stays VICTOR.
+- **Design:** dark monochrome everywhere. Black page, grey tiles, white type, one white round button for the main action; colour only for results (green, amber, red). Home is a tile grid with a hero "Scan this room" button, a ring for checks done, a short splash where the mark draws itself.
+- **Lens check fixes** (`src/lens.js`): every frame is lined up with the first before it is added in (`alignShift`, `addShifted`), so a 1-3 px lens dot survives hand shake during the 3.5 s code. Analysis is 480 px wide (was 320). The lone-dot ring test now sits just outside the spot (`ringRadii`), so a lens held close is no longer dropped. Max dot size 90 px. Tuned settings moved to a new key so old phones get the new defaults.
+- **Lens sweep:** one tap starts back-to-back scans until tapped again; the round shutter's ring fills with the flash code; a spot seen in two scans in a row is confirmed on its own.
+- **3D Wi-Fi map** (`map.html`, `src/map-page.js`, maths in `src/airmap.js`, three.js): each source plotted by frequency (across), upload (up, log scale) and signal (depth). Green / amber / red from the upload pattern: steady upload like live video, regular keyframe bursts every 2-5 s, the flash test result, camera-like name, camera Wi-Fi chip (chip only counts on top of a steady upload). Drag, pinch, pan; tap a dot or a colour chip for channel, band, signal, upload now (replay), upload over time and the reasons. Red dots pulse and carry labels. In the Android app the map scans nearby Wi-Fi on opening. `map.html?demo=1` runs the real analysis on the simulated room.
+- **Limit (honest):** a phone cannot see other devices' upload. Upload colours need the laptop traffic test; nearby networks from the phone are coloured by name, chip and signal only, and say so.
+- Tests: 72 unit, 13 e2e, all green.
+- Next: try the lens sweep on a real phone against a real phone camera at 30 cm and 1-2 m; decide on a one-command live feed from the Mac so the traffic test needs no manual capture and upload.
+
 ## Decisions (1 Nov polish)
 - **Branch:** all of this is on the local branch `demo-polish`.
 - **Design:** one stylesheet (`src/app.css`) for every screen. Inset grouped lists, large titles that collapse into the nav bar, one filled button per screen in a bar at the bottom, everything else as plain text buttons. Light and dark follow the phone; camera screens are always dark.
